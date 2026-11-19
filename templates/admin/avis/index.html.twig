@@ -1,0 +1,60 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Avis{% endblock %}
+{% block page_title %}Modération des avis{% endblock %}
+
+{% block body %}
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ avis|length }} avis</h6>
+    </div>
+    <table class="table table-hover">
+        <thead><tr><th>Client</th><th>Cible</th><th>Note</th><th>Commentaire</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for avi in avis %}
+            <tr>
+                <td>{{ avi.client.nomComplet }}</td>
+                <td>
+                    {% if avi.hotel %}<span class="badge bg-info text-dark"><i class="fas fa-hotel me-1"></i>{{ avi.hotel.nom }}</span>
+                    {% elseif avi.chauffeur %}<span class="badge bg-secondary"><i class="fas fa-car me-1"></i>{{ avi.chauffeur.nomComplet }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for i in 1..5 %}
+                        <i class="fas fa-star {{ i <= avi.note ? 'text-warning' : 'text-muted' }}" style="font-size:.75rem"></i>
+                    {% endfor %}
+                </td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ avi.commentaire }}">
+                    {{ avi.commentaire|slice(0,60) }}{% if avi.commentaire|length > 60 %}...{% endif %}
+                </td>
+                <td class="text-muted" style="font-size:.8rem">{{ avi.dateAvis|date('d/m/Y') }}</td>
+                <td>
+                    <span class="badge {{ avi.statut.value == 'publie' ? 'bg-success' : avi.statut.value == 'rejete' ? 'bg-danger' : 'bg-warning text-dark' }}">
+                        {{ avi.statut.label() }}
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        {% if avi.statut.value == 'en_attente' %}
+                        <form action="{{ path('admin_avis_publier', {id: avi.id}) }}" method="POST">
+                            <input type="hidden" name="_token" value="{{ csrf_token('pub' ~ avi.id) }}">
+                            <button class="btn btn-sm btn-success" title="Publier"><i class="fas fa-check"></i></button>
+                        </form>
+                        <form action="{{ path('admin_avis_rejeter', {id: avi.id}) }}" method="POST">
+                            <input type="hidden" name="_token" value="{{ csrf_token('rej' ~ avi.id) }}">
+                            <button class="btn btn-sm btn-warning" title="Rejeter"><i class="fas fa-times"></i></button>
+                        </form>
+                        {% endif %}
+                        <form action="{{ path('admin_avis_delete', {id: avi.id}) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('del' ~ avi.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Aucun avis</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

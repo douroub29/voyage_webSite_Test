@@ -1,0 +1,160 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvelle réservation{% endblock %}
+
+{% block extra_styles %}
+.form-control, .form-select { background:var(--input-bg)!important;border:1px solid var(--border-color)!important;color:var(--text-light)!important;border-radius:6px; }
+.form-control:focus, .form-select:focus { border-color:var(--gold)!important;box-shadow:0 0 0 .15rem var(--gold-soft)!important; }
+.form-check-input { background-color:var(--input-bg);border-color:var(--border-color); }
+.form-check-input:checked { background-color:var(--gold);border-color:var(--gold); }
+.step-indicator { display:flex;gap:.5rem;margin-bottom:2rem; }
+.step { flex:1;height:4px;background:var(--border-color);border-radius:2px; }
+.step.done { background:var(--gradient); }
+.form-control.is-invalid { border-color:#dc3545!important; box-shadow:0 0 0 .15rem rgba(220,53,69,.15)!important; }
+.erreur-places { background:#fdecee; border-left:3px solid #dc3545; color:#842029; border-radius:6px; padding:.6rem .9rem; margin-top:.5rem; font-size:.875rem; }
+.erreur-places ul { margin:0; padding:0; list-style:none; }
+{% endblock %}
+
+{% block body %}
+<div class="container py-5" style="max-width:900px">
+    <div class="mb-4">
+        <a href="{{ path('app_voyage_show', {id: voyage.id}) }}" class="text-muted small" style="text-decoration:none">
+            <i class="fas fa-arrow-left me-1"></i>Retour au voyage
+        </a>
+        <h1 class="section-title mt-2">Réserver votre voyage</h1>
+    </div>
+
+    <div class="step-indicator">
+        <div class="step done"></div>
+        <div class="step"></div>
+        <div class="step"></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:12px;padding:2rem">
+                <h4 style="font-family:'Playfair Display',serif;margin-bottom:1.5rem">Options de réservation</h4>
+
+                {% if voucherDisponible %}
+                    <div class="flash-success p-3 mb-4 rounded small">
+                        <i class="fas fa-ticket-alt me-1"></i>
+                        Votre voucher fidélité <strong>{{ voucherDisponible.code }}</strong> sera appliqué automatiquement :
+                        <strong>-{{ voucherDisponible.pourcentage }} %</strong> sur le prix total de cette réservation.
+                    </div>
+                {% endif %}
+
+                {{ form_start(form) }}
+                    {% set erreurPersonnes = form.nombrePersonnes.vars.errors|length > 0 %}
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ form.nombrePersonnes.vars.id }}">Nombre de personnes *</label>
+                        {{ form_widget(form.nombrePersonnes, {attr: {class: 'form-control' ~ (erreurPersonnes ? ' is-invalid')}}) }}
+                        <div class="small text-muted mt-1">
+                            <i class="fas fa-users text-gold me-1"></i>{{ voyage.placesRestantes }} place(s) disponible(s) sur ce voyage
+                        </div>
+
+                        {# Erreur renvoyée par le serveur #}
+                        <div class="erreur-places" id="erreur-places-serveur" role="alert" {% if not erreurPersonnes %}hidden{% endif %}>
+                            <i class="fas fa-exclamation-triangle me-1"></i>{{ form_errors(form.nombrePersonnes) }}
+                        </div>
+                        {# Erreur affichée immédiatement pendant la saisie #}
+                        <div class="erreur-places" id="erreur-places" role="alert" hidden>
+                            <i class="fas fa-exclamation-triangle me-1"></i><span></span>
+                        </div>
+                    </div>
+
+                    <hr class="divider-gold">
+                    <h6 class="text-gold mb-3 text-uppercase" style="font-size:.8rem;letter-spacing:1px">Hébergement (optionnel)</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Choisir un hôtel</label>
+                        {{ form_widget(form.hotel, {attr: {class: 'form-select'}}) }}
+                        {{ form_errors(form.hotel) }}
+                    </div>
+                    <div class="mb-4 small text-muted">
+                        <i class="fas fa-moon text-gold me-1"></i>
+                        Séjour à l'hôtel de <strong>{{ voyage.getDureeJours() }} nuit(s)</strong>, calculé selon la durée du voyage
+                        ({{ voyage.dateDepart|date('d/m/Y') }} → {{ voyage.dateRetour|date('d/m/Y') }}).
+                    </div>
+
+                    <hr class="divider-gold">
+                    <h6 class="text-gold mb-3 text-uppercase" style="font-size:.8rem;letter-spacing:1px">Transfert (optionnel)</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Chauffeur de transfert</label>
+                        {{ form_widget(form.chauffeur, {attr: {class: 'form-select'}}) }}
+                        {{ form_errors(form.chauffeur) }}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Type de transfert</label>
+                        {{ form_widget(form.typeTransfert, {attr: {class: 'form-select'}}) }}
+                        {{ form_errors(form.typeTransfert) }}
+                    </div>
+
+                    <hr class="divider-gold">
+                    <div class="mb-4">
+                        <label class="form-label">Demandes particulières</label>
+                        {{ form_widget(form.notes, {attr: {class: 'form-control', rows: 3}}) }}
+                        {{ form_errors(form.notes) }}
+                    </div>
+
+                    <button type="submit" class="btn-gold w-100 text-center" style="display:block;padding:1rem;font-size:1rem">
+                        <i class="fas fa-arrow-right me-2"></i>Continuer vers le récapitulatif
+                    </button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <!-- RECAP VOYAGE -->
+        <div class="col-lg-5">
+            <div class="sticky-top" style="top:100px;background:var(--dark-card);border:1px solid var(--border-color);border-radius:12px;overflow:hidden">
+                {% if voyage.photo %}
+                    <img src="/uploads/{{ voyage.photo }}" alt="{{ voyage.titre }}" style="width:100%;height:180px;object-fit:cover">
+                {% endif %}
+                <div class="p-4">
+                    <div class="text-muted small mb-1"><i class="fas fa-map-marker-alt text-gold me-1"></i>{{ voyage.destination.nom }}</div>
+                    <h5 style="color:var(--text-light)">{{ voyage.titre }}</h5>
+                    <div class="row g-2 my-3 small text-muted">
+                        <div class="col-6"><i class="fas fa-calendar text-gold me-1"></i> {{ voyage.dateDepart|date('d/m/Y') }}</div>
+                        <div class="col-6"><i class="fas fa-calendar-check text-gold me-1"></i> {{ voyage.dateRetour|date('d/m/Y') }}</div>
+                        <div class="col-6"><i class="fas fa-clock text-gold me-1"></i> {{ voyage.getDureeJours() }} jours</div>
+                    </div>
+                    <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Prix par personne</span>
+                            <span class="text-gold fw-bold">{{ voyage.prix|number_format(0,',','  ') }} €</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    const champ  = document.getElementById('{{ form.nombrePersonnes.vars.id }}');
+    const bloc   = document.getElementById('erreur-places');
+    const serveur = document.getElementById('erreur-places-serveur');
+    if (!champ || !bloc) return;
+    const places = parseInt(champ.dataset.places, 10);
+
+    function verifier() {
+        const n = parseInt(champ.value, 10);
+        let message = '';
+        if (champ.value !== '' && (isNaN(n) || n < 1)) {
+            message = 'Le nombre de personnes doit être au moins 1.';
+        } else if (n > places) {
+            message = 'Nombre de personnes (' + n + ') supérieur au nombre de places disponibles : il ne reste que ' + places + ' place(s) pour ce voyage.';
+        }
+        bloc.querySelector('span').textContent = message;
+        bloc.hidden = message === '';
+        champ.classList.toggle('is-invalid', message !== '');
+        return message === '';
+    }
+
+    champ.addEventListener('input', () => { if (serveur) serveur.hidden = true; verifier(); });
+    champ.form.addEventListener('submit', (e) => {
+        if (!verifier()) { e.preventDefault(); champ.focus(); }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Hôtels{% endblock %}
+{% block page_title %}Gestion des hôtels{% endblock %}
+
+{% block body %}
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ hotels|length }} hôtel(s)</h6>
+        <a href="{{ path('admin_hotel_new') }}" class="btn btn-sm btn-admin-primary"><i class="fas fa-plus me-1"></i>Nouvel hôtel</a>
+    </div>
+    <table class="table table-hover">
+        <thead><tr><th>Photo</th><th>Nom</th><th>Destination</th><th>Étoiles</th><th>Prix/nuit</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for hotel in hotels %}
+            <tr>
+                <td>
+                    {% if hotel.photoPrincipale %}
+                        <img src="/uploads/{{ hotel.photoPrincipale }}" style="width:50px;height:40px;object-fit:cover;border-radius:4px">
+                    {% else %}
+                        <div style="width:50px;height:40px;background:#f0f2f8;border-radius:4px;display:flex;align-items:center;justify-content:center">
+                            <i class="fas fa-hotel text-muted"></i>
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="fw-500">{{ hotel.nom }}</td>
+                <td class="text-muted">{{ hotel.destination.nom }}</td>
+                <td>
+                    {% for i in 1..hotel.etoiles %}<i class="fas fa-star text-warning" style="font-size:.75rem"></i>{% endfor %}
+                </td>
+                <td class="fw-bold" style="color:var(--admin-gold)">{{ hotel.prixParNuit|number_format(0,',','  ') }} €</td>
+                <td><span class="badge {{ hotel.actif ? 'bg-success' : 'bg-secondary' }}">{{ hotel.actif ? 'Actif' : 'Inactif' }}</span></td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ path('admin_hotel_edit', {id: hotel.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                        <form action="{{ path('admin_hotel_delete', {id: hotel.id}) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ hotel.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Aucun hôtel</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

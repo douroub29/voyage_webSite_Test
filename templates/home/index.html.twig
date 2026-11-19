@@ -1,0 +1,305 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block extra_styles %}
+.hero {
+    min-height: 88vh;
+    background: linear-gradient(90deg, rgba(246,247,251,0.97) 0%, rgba(246,247,251,0.88) 45%, rgba(246,247,251,0.35) 100%),
+                url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+}
+.hero-title { font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.2; }
+.search-bar {
+    background: var(--dark-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 12px 40px rgba(29,34,51,0.12);
+}
+.search-bar input, .search-bar select, .avis-form textarea, .avis-form select {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+}
+.search-bar input:focus, .avis-form textarea:focus, .avis-form select:focus {
+    border-color: var(--gold);
+    outline: none;
+    box-shadow: 0 0 0 0.15rem var(--gold-soft);
+}
+.search-bar input::placeholder, .avis-form textarea::placeholder { color: var(--text-muted); }
+.small-label { color: var(--text-muted); font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; }
+.section-py { padding: 5rem 0; }
+.voyage-card { display: flex; flex-direction: column; }
+.voyage-card .photo-wrap { position: relative; overflow: hidden; height: 220px; }
+.voyage-card .photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
+.voyage-card:hover .photo-wrap img { transform: scale(1.06); }
+.voyage-card .photo-wrap .duree { position: absolute; top: 12px; right: 12px; }
+.voyage-card .card-body-dt { padding: 1.5rem; display: flex; flex-direction: column; flex: 1 1 auto; }
+.avis-card { background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; box-shadow: var(--shadow-sm); height: 100%; display: flex; flex-direction: column; }
+.avis-card .commentaire { flex: 1 1 auto; }
+.avis-form { background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.75rem; box-shadow: var(--shadow-sm); }
+.stat-number-hero { font-size: 2.5rem; font-weight: 700; color: var(--gold); font-family: 'Playfair Display', serif; }
+.cta-banner { background: linear-gradient(135deg, #fbf6ea, #f3e7c9); padding: 5rem 0; border-top: 1px solid var(--border-color); }
+{% endblock %}
+
+{% block body %}
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-6">
+                <div class="mb-3">
+                    <span class="text-gold" style="font-size:0.8rem;letter-spacing:3px;text-transform:uppercase">✦ Agence de Voyage Premium</span>
+                </div>
+                <h1 class="hero-title section-title mb-4">
+                    Découvrez le Monde<br><span class="text-gold">avec Élégance</span>
+                </h1>
+                <p class="text-muted mb-4" style="font-size:1.05rem;max-width:500px">
+                    DreamTravel vous propose des voyages d'exception, des hôtels de luxe et un service de transfert personnalisé dans les plus belles destinations du monde.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ path('app_voyages') }}" class="btn-gold" style="font-size:0.9rem;padding:0.75rem 2rem">
+                        <i class="fas fa-search me-2"></i>Explorer les voyages
+                    </a>
+                    {% if not app.user %}
+                        <a href="{{ path('app_register') }}" class="btn-outline-gold" style="font-size:0.9rem;padding:0.75rem 2rem">
+                            Créer un compte
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Stats -->
+                <div class="d-flex gap-4 mt-5 flex-wrap">
+                    <div>
+                        <div class="stat-number-hero">500+</div>
+                        <div class="text-muted small text-uppercase" style="letter-spacing:1px">Destinations</div>
+                    </div>
+                    <div style="border-left:1px solid var(--border-color);padding-left:2rem">
+                        <div class="stat-number-hero">10k+</div>
+                        <div class="text-muted small text-uppercase" style="letter-spacing:1px">Clients satisfaits</div>
+                    </div>
+                    <div style="border-left:1px solid var(--border-color);padding-left:2rem">
+                        <div class="stat-number-hero">15</div>
+                        <div class="text-muted small text-uppercase" style="letter-spacing:1px">Ans d'expertise</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="col-lg-5 offset-lg-1">
+                <div class="search-bar">
+                    <h5 class="text-gold mb-4" style="font-family:'Playfair Display',serif">Rechercher un voyage</h5>
+                    <form action="{{ path('app_voyages') }}" method="GET">
+                        <div class="mb-3">
+                            <label class="form-label small-label">Destination</label>
+                            <input type="text" name="destination" placeholder="Où voulez-vous aller ?">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small-label">Société de voyage</label>
+                            <input type="text" name="societe" placeholder="Nom de la société (optionnel)">
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small-label">Date de départ</label>
+                                <input type="date" name="date_depart">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small-label">Budget max (€)</label>
+                                <input type="number" name="budget" placeholder="Ex: 2000">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-gold w-100 text-center" style="display:block;padding:0.85rem">
+                            <i class="fas fa-search me-2"></i>Rechercher
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY US -->
+<section class="section-py" style="background:var(--dark-card)">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title centered">Pourquoi Choisir DreamTravel ?</h2>
+            <p class="text-muted mt-3" style="max-width:500px;margin:0 auto">Nous nous engageons à vous offrir une expérience de voyage inoubliable.</p>
+        </div>
+        <div class="row g-4">
+            {% for feature in [
+                {icon: 'fa-award', title: 'Expertise Premium', desc: '15 ans d\'expérience dans le voyage de luxe et les destinations exclusives.'},
+                {icon: 'fa-shield-alt', title: 'Réservation Sécurisée', desc: 'Paiement sécurisé et assistance complète avant et pendant votre voyage.'},
+                {icon: 'fa-car', title: 'Transferts VIP', desc: 'Chauffeurs professionnels disponibles pour tous vos transferts aéroport-hôtel.'},
+                {icon: 'fa-headset', title: 'Support 24/7', desc: 'Notre équipe est disponible à toute heure pour vous accompagner.'}
+            ] %}
+            <div class="col-md-6 col-lg-3">
+                <div class="text-center p-4">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width:70px;height:70px;background:var(--gold-soft);border:1px solid var(--gold-light)">
+                        <i class="fas {{ feature.icon }} text-gold fa-lg"></i>
+                    </div>
+                    <h5 style="color:var(--text-light);font-family:'Playfair Display',serif">{{ feature.title }}</h5>
+                    <p class="text-muted small">{{ feature.desc }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- VOYAGES VEDETTES -->
+{% if voyagesVedettes|length > 0 %}
+<section class="section-py">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
+            <div>
+                <h2 class="section-title">Voyages à la Une</h2>
+                <p class="text-muted mt-2">Nos offres exclusives du moment</p>
+            </div>
+            <a href="{{ path('app_voyages') }}" class="btn-outline-gold">Voir tout <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+        <div class="row g-4">
+            {% for voyage in voyagesVedettes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card-dt voyage-card h-100">
+                    <a href="{{ path('app_voyage_show', {id: voyage.id}) }}" class="photo-wrap d-block">
+                        {% if voyage.photoUrl %}
+                            <img src="{{ voyage.photoUrl }}" alt="{{ voyage.titre }}" loading="lazy">
+                        {% else %}
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:var(--border-color)">
+                                <i class="fas fa-plane fa-2x text-gold"></i>
+                            </div>
+                        {% endif %}
+                        <span class="badge badge-gold duree">{{ voyage.getDureeJours() }} jours</span>
+                    </a>
+                    <div class="card-body-dt">
+                        <span class="small text-muted text-uppercase mb-2" style="letter-spacing:1px">
+                            <i class="fas fa-map-marker-alt me-1 text-gold"></i>
+                            {{ voyage.destination.nom }}, {{ voyage.destination.pays }}
+                        </span>
+                        <h5 style="color:var(--text-light)">{{ voyage.titre }}</h5>
+                        {% if voyage.societe %}
+                            <div class="small text-muted mb-2"><i class="fas fa-building me-1 text-gold"></i>{{ voyage.societe.nom }}</div>
+                        {% endif %}
+                        <p class="text-muted small flex-grow-1" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                            {{ voyage.description }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top:1px solid var(--border-color)">
+                            <div>
+                                <div class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px">À partir de</div>
+                                <div class="text-gold" style="font-size:1.3rem;font-weight:700;font-family:'Playfair Display',serif">{{ voyage.prix|number_format(0, ',', ' ') }} €</div>
+                            </div>
+                            <a href="{{ path('app_voyage_show', {id: voyage.id}) }}" class="btn-gold" style="font-size:0.8rem;padding:.55rem 1.2rem">
+                                <i class="fas fa-eye me-1"></i>Voir le détail
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- RECOMMANDATIONS (client connecté) -->
+{{ include('profil/_bloc_recommandations.html.twig', {classe: 'section-py pt-0', conteneur: 'container'}) }}
+
+<!-- AVIS CLIENTS -->
+<section class="section-py" id="avis" style="background:var(--dark-card)">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title centered">Ce que disent nos clients</h2>
+            <p class="text-muted mt-2">Avis publiés par nos voyageurs</p>
+        </div>
+
+        {% if avis|length > 0 %}
+            <div class="row g-4">
+                {% for avi in avis %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="avis-card">
+                        <div class="d-flex gap-1 mb-3 stars">
+                            {% for i in 1..5 %}
+                                <i class="fas fa-star {{ i <= avi.note ? 'filled' }}"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="text-muted mb-4 commentaire" style="font-style:italic">"{{ avi.commentaire }}"</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;background:var(--gold-soft);color:var(--gold-dark);font-weight:700">
+                                {{ avi.client.prenom|slice(0,1)|upper }}{{ avi.client.nom|slice(0,1)|upper }}
+                            </div>
+                            <div>
+                                <div style="color:var(--text-light);font-weight:500">{{ avi.client.nomComplet }}</div>
+                                <div class="text-muted" style="font-size:0.78rem">
+                                    {{ avi.dateAvis|date('d/m/Y') }}
+                                    {% if avi.hotel %} · {{ avi.hotel.nom }}{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-center text-muted">Aucun avis pour le moment. {% if avisForm %}Soyez le premier à donner le vôtre !{% endif %}</p>
+        {% endif %}
+
+        <!-- Formulaire d'avis -->
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-7">
+                {% if avisForm %}
+                    <div class="avis-form">
+                        <h5 class="mb-3" style="font-family:'Playfair Display',serif">
+                            <i class="fas fa-pen-nib text-gold me-2"></i>Rédiger votre avis
+                        </h5>
+                        {{ form_start(avisForm) }}
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small-label">{{ avisForm.note.vars.label }}</label>
+                                    {{ form_widget(avisForm.note) }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small-label">{{ avisForm.commentaire.vars.label }}</label>
+                                    {{ form_widget(avisForm.commentaire) }}
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-gold mt-3">
+                                <i class="fas fa-paper-plane me-2"></i>Publier mon avis
+                            </button>
+                        {{ form_end(avisForm) }}
+                    </div>
+                {% elseif not app.user %}
+                    <p class="text-center text-muted">
+                        <a href="{{ path('app_login') }}" class="text-gold">Connectez-vous</a> pour partager votre avis.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+    <div class="container text-center">
+        <h2 style="font-family:'Playfair Display',serif;font-size:2.2rem;margin-bottom:1rem">
+            Prêt pour votre prochain voyage ?
+        </h2>
+        <p class="text-muted mb-4" style="font-size:1.05rem">Inscrivez-vous et accédez à des offres exclusives.</p>
+        {% if not app.user %}
+            <a href="{{ path('app_register') }}" class="btn-gold" style="font-size:1rem;padding:1rem 2.5rem">
+                <i class="fas fa-rocket me-2"></i>Commencer maintenant
+            </a>
+        {% else %}
+            <a href="{{ path('app_voyages') }}" class="btn-gold" style="font-size:1rem;padding:1rem 2.5rem">
+                <i class="fas fa-search me-2"></i>Explorer les voyages
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}

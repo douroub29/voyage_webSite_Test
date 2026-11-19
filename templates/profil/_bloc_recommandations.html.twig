@@ -1,0 +1,23 @@
+{# Conteneur "Recommandé pour vous" : charge profil/_recommandations.html.twig en différé. #}
+{% if is_granted('ROLE_CLIENT') %}
+<section class="{{ classe|default('') }}">
+    <div class="{{ conteneur|default('') }}">
+        <div class="mb-4">
+            <h2 class="section-title" style="font-size:{{ taille|default('1.8rem') }}">Recommandé pour vous</h2>
+            <p class="text-muted mt-2 mb-0">Sélection personnalisée selon vos réservations</p>
+        </div>
+        <div id="recommandations" data-url="{{ path('profil_recommandations') }}">
+            <div class="text-muted small"><i class="fas fa-spinner fa-spin me-2 text-gold"></i>Recherche des voyages qui vous correspondent…</div>
+        </div>
+    </div>
+</section>
+<script>
+(function () {
+    const zone = document.getElementById('recommandations');
+    fetch(zone.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((r) => r.ok ? r.text() : Promise.reject())
+        .then((html) => { zone.innerHTML = html; })
+        .catch(() => { zone.closest('section').remove(); });
+})();
+</script>
+{% endif %}

@@ -1,0 +1,169 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block body %}
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ nbReservationsTotal }}</div>
+                    <div class="stat-label">Réservations totales</div>
+                </div>
+                <i class="fas fa-calendar-check stat-icon" style="color:var(--admin-gold)"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ nbClients }}</div>
+                    <div class="stat-label">Clients inscrits</div>
+                </div>
+                <i class="fas fa-users stat-icon" style="color:#0d6efd"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ nbVoyages }}</div>
+                    <div class="stat-label">Voyages actifs</div>
+                </div>
+                <i class="fas fa-plane stat-icon" style="color:#198754"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-number">{{ revenusMois|number_format(0, ',', ' ') }} €</div>
+                    <div class="stat-label">Revenus du mois</div>
+                </div>
+                <i class="fas fa-euro-sign stat-icon" style="color:#fd7e14"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATUS COUNTERS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color:#ffc107;text-align:center">
+            <div class="stat-number" style="color:#ffc107">{{ nbReservationsAttente }}</div>
+            <div class="stat-label">En attente de confirmation</div>
+            <a href="{{ path('admin_reservation_index', {statut:'en_attente'}) }}" class="btn btn-sm mt-2" style="background:rgba(255,193,7,.1);color:#ffc107;border:1px solid rgba(255,193,7,.3);font-size:.75rem">
+                Traiter <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card green" style="text-align:center">
+            <div class="stat-number" style="color:#198754">{{ nbReservationsConfirmees }}</div>
+            <div class="stat-label">Réservations confirmées</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card orange" style="text-align:center">
+            <div class="stat-number" style="color:#fd7e14">{{ revenusTotal|number_format(0, ',', ' ') }} €</div>
+            <div class="stat-label">Revenus totaux</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- RECENT RESERVATIONS -->
+    <div class="col-lg-8">
+        <div class="admin-table">
+            <div class="table-header">
+                <h6 style="margin:0;font-size:.875rem;font-weight:600">Réservations récentes</h6>
+                <a href="{{ path('admin_reservation_index') }}" class="btn btn-sm btn-admin-primary">Tout voir</a>
+            </div>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Client</th>
+                        <th>Voyage</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservationsRecentes %}
+                    <tr>
+                        <td><span class="fw-bold" style="color:var(--admin-gold)">{{ r.reference }}</span></td>
+                        <td>{{ r.client.nomComplet }}</td>
+                        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.voyage.titre }}</td>
+                        <td class="fw-bold">{{ r.prixTotal|number_format(0,',','  ') }} €</td>
+                        <td>
+                            <span class="badge badge-{{ r.statut.value }}">{{ r.statut.label() }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ path('admin_reservation_show', {id: r.id}) }}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">Aucune réservation</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- VOYAGES A VENIR -->
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h6 style="margin:0;font-size:.875rem;font-weight:600">Voyages à venir</h6>
+            </div>
+            <div class="admin-card-body" style="padding:0">
+                {% for r in voyagesAVenir %}
+                <div style="padding:1rem;border-bottom:1px solid var(--admin-border)">
+                    <div style="font-size:.875rem;font-weight:500">{{ r.voyage.titre }}</div>
+                    <div style="font-size:.75rem;color:var(--admin-muted);margin-top:2px">
+                        <i class="fas fa-calendar me-1"></i>{{ r.voyage.dateDepart|date('d/m/Y') }}
+                        &nbsp;•&nbsp;
+                        <i class="fas fa-user me-1"></i>{{ r.client.nomComplet }}
+                    </div>
+                </div>
+                {% else %}
+                <div style="padding:2rem;text-align:center;color:var(--admin-muted);font-size:.875rem">Aucun voyage confirmé à venir</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- QUICK LINKS -->
+        <div class="admin-card mt-3">
+            <div class="admin-card-header">
+                <h6 style="margin:0;font-size:.875rem;font-weight:600">Actions rapides</h6>
+            </div>
+            <div class="admin-card-body">
+                <div class="d-flex flex-column gap-2">
+                    <a href="{{ path('admin_destination_new') }}" class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="fas fa-plus me-2 text-warning"></i>Ajouter une destination
+                    </a>
+                    <a href="{{ path('admin_voyage_new') }}" class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="fas fa-plus me-2 text-success"></i>Créer un voyage
+                    </a>
+                    <a href="{{ path('admin_hotel_new') }}" class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="fas fa-plus me-2 text-info"></i>Ajouter un hôtel
+                    </a>
+                    <a href="{{ path('admin_chauffeur_new') }}" class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="fas fa-plus me-2" style="color:var(--admin-gold)"></i>Ajouter un chauffeur
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

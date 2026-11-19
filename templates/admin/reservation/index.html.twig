@@ -1,0 +1,46 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Réservations{% endblock %}
+{% block page_title %}Gestion des réservations{% endblock %}
+
+{% block body %}
+<!-- FILTRES -->
+<div class="admin-card mb-3">
+    <div class="admin-card-body" style="padding:1rem 1.5rem">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('admin_reservation_index') }}" class="btn btn-sm {{ not filtreStatut ? 'btn-admin-primary' : 'btn-outline-secondary' }}">Toutes</a>
+            <a href="{{ path('admin_reservation_index', {statut:'en_attente'}) }}" class="btn btn-sm {{ filtreStatut == 'en_attente' ? 'btn-warning' : 'btn-outline-warning' }}">En attente</a>
+            <a href="{{ path('admin_reservation_index', {statut:'confirmee'}) }}" class="btn btn-sm {{ filtreStatut == 'confirmee' ? 'btn-success' : 'btn-outline-success' }}">Confirmées</a>
+            <a href="{{ path('admin_reservation_index', {statut:'annulee'}) }}" class="btn btn-sm {{ filtreStatut == 'annulee' ? 'btn-danger' : 'btn-outline-danger' }}">Annulées</a>
+        </div>
+    </div>
+</div>
+
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ reservations|length }} réservation(s)</h6>
+    </div>
+    <table class="table table-hover">
+        <thead><tr><th>Référence</th><th>Client</th><th>Voyage</th><th>Dates</th><th>Pers.</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for r in reservations %}
+            <tr>
+                <td><span class="fw-bold" style="color:var(--admin-gold)">{{ r.reference }}</span></td>
+                <td>{{ r.client.nomComplet }}</td>
+                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ r.voyage.titre }}">{{ r.voyage.titre }}</td>
+                <td class="text-muted" style="font-size:.8rem">
+                    {{ r.voyage.dateDepart|date('d/m/Y') }}<br>{{ r.voyage.dateRetour|date('d/m/Y') }}
+                </td>
+                <td>{{ r.nombrePersonnes }}</td>
+                <td class="fw-bold">{{ r.prixTotal|number_format(0,',','  ') }} €</td>
+                <td><span class="badge badge-{{ r.statut.value }}">{{ r.statut.label() }}</span></td>
+                <td>
+                    <a href="{{ path('admin_reservation_show', {id: r.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Aucune réservation</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

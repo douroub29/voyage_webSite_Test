@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} — DreamTravel Admin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --admin-sidebar:  #0d0d20;
+            --admin-bg:       #f0f2f8;
+            --admin-white:    #ffffff;
+            --admin-gold:     #c9a84c;
+            --admin-dark:     #1a1a35;
+            --admin-border:   #e2e6ea;
+            --admin-text:     #2c3e50;
+            --admin-muted:    #6c757d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            margin: 0;
+        }
+
+        /* ── SIDEBAR ── */
+        .admin-sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: var(--admin-sidebar);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-logo {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid #1e1e40;
+        }
+        .sidebar-logo a {
+            font-family: Georgia, serif;
+            font-size: 1.3rem;
+            color: var(--admin-gold);
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        .sidebar-logo small { display: block; color: #555580; font-size: 0.7rem; letter-spacing: 1px; margin-top: 2px; }
+
+        .sidebar-nav { padding: 1rem 0; flex: 1; }
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #404060;
+            padding: 0.8rem 1.5rem 0.3rem;
+            font-weight: 600;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1.5rem;
+            color: #8888aa;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link i { width: 18px; text-align: center; font-size: 0.9rem; }
+        .sidebar-link:hover { color: #ccc; background: rgba(255,255,255,0.04); }
+        .sidebar-link.active { color: var(--admin-gold); border-left-color: var(--admin-gold); background: rgba(201,168,76,0.08); }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #1e1e40;
+        }
+        .sidebar-footer .user-info { font-size: 0.8rem; color: #666688; }
+        .sidebar-footer .user-name { color: var(--admin-gold); font-weight: 500; font-size: 0.875rem; }
+
+        /* ── MAIN ── */
+        .admin-main {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TOPBAR ── */
+        .admin-topbar {
+            background: var(--admin-white);
+            border-bottom: 1px solid var(--admin-border);
+            padding: 0.875rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .admin-topbar h4 { margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--admin-dark); }
+        .admin-topbar .breadcrumb { margin: 0; font-size: 0.8rem; }
+
+        /* ── CONTENT ── */
+        .admin-content { padding: 1.5rem; flex: 1; }
+
+        /* ── STAT CARDS ── */
+        .stat-card {
+            background: var(--admin-white);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            border: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--admin-gold);
+        }
+        .stat-card.blue  { border-left-color: #0d6efd; }
+        .stat-card.green { border-left-color: #198754; }
+        .stat-card.red   { border-left-color: #dc3545; }
+        .stat-card.orange{ border-left-color: #fd7e14; }
+        .stat-card .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+        .stat-card .stat-label  { font-size: 0.78rem; color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.3rem; }
+        .stat-card .stat-icon   { font-size: 2rem; opacity: 0.15; }
+
+        /* ── TABLES ── */
+        .admin-table {
+            background: var(--admin-white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .admin-table .table { margin: 0; }
+        .admin-table .table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--admin-muted); border-bottom: 2px solid var(--admin-border); padding: 0.875rem 1rem; background: #fafafa; }
+        .admin-table .table td { padding: 0.875rem 1rem; vertical-align: middle; font-size: 0.875rem; border-bottom: 1px solid var(--admin-border); }
+        .admin-table .table tr:last-child td { border-bottom: none; }
+        .admin-table .table-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--admin-border); display: flex; align-items: center; justify-content: space-between; }
+
+        /* ── CARDS ADMIN ── */
+        .admin-card {
+            background: var(--admin-white);
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .admin-card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--admin-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-card-body { padding: 1.5rem; }
+
+        /* ── BADGES ── */
+        .badge-en_attente { background: #ffc107; color: #000; }
+        .badge-confirmee  { background: #198754; color: #fff; }
+        .badge-annulee    { background: #dc3545; color: #fff; }
+        .badge-publie     { background: #198754; color: #fff; }
+        .badge-rejete     { background: #dc3545; color: #fff; }
+
+        /* ── BUTTONS ADMIN ── */
+        .btn-admin-primary { background: var(--admin-gold); color: #000; border: none; font-weight: 600; font-size: 0.85rem; }
+        .btn-admin-primary:hover { background: #b8943e; color: #000; }
+
+        /* ── FLASH ── */
+        .flash-success { background: #d1e7dd; border-left: 4px solid #198754; color: #0a3622; }
+        .flash-warning { background: #fff3cd; border-left: 4px solid #ffc107; color: #664d03; }
+        .flash-danger  { background: #f8d7da; border-left: 4px solid #dc3545; color: #58151c; }
+        .flash-info    { background: #cff4fc; border-left: 4px solid #0dcaf0; color: #055160; }
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar">
+    <div class="sidebar-logo">
+        <a href="{{ path('admin_dashboard') }}">DreamTravel</a>
+        <small>Administration</small>
+    </div>
+
+    <nav class="sidebar-nav">
+        {% set r = app.request.get('_route') %}
+
+        <div class="sidebar-section-title">Principal</div>
+        <a href="{{ path('admin_dashboard') }}" class="sidebar-link {{ r == 'admin_dashboard' ? 'active' }}">
+            <i class="fas fa-th-large"></i> Tableau de bord
+        </a>
+
+        <div class="sidebar-section-title">Catalogue</div>
+        <a href="{{ path('admin_destination_index') }}" class="sidebar-link {{ r starts with 'admin_destination' ? 'active' }}">
+            <i class="fas fa-map-marked-alt"></i> Destinations
+        </a>
+        <a href="{{ path('admin_voyage_index') }}" class="sidebar-link {{ r starts with 'admin_voyage' ? 'active' }}">
+            <i class="fas fa-plane-departure"></i> Voyages
+        </a>
+        <a href="{{ path('admin_societe_index') }}" class="sidebar-link {{ r starts with 'admin_societe' ? 'active' }}">
+            <i class="fas fa-building"></i> Sociétés
+        </a>
+        <a href="{{ path('admin_hotel_index') }}" class="sidebar-link {{ r starts with 'admin_hotel' ? 'active' }}">
+            <i class="fas fa-hotel"></i> Hôtels
+        </a>
+        <a href="{{ path('admin_chauffeur_index') }}" class="sidebar-link {{ r starts with 'admin_chauffeur' ? 'active' }}">
+            <i class="fas fa-car"></i> Chauffeurs
+        </a>
+
+        <div class="sidebar-section-title">Gestion</div>
+        <a href="{{ path('admin_reservation_index') }}" class="sidebar-link {{ r starts with 'admin_reservation' ? 'active' }}">
+            <i class="fas fa-calendar-check"></i> Réservations
+        </a>
+        <a href="{{ path('admin_client_index') }}" class="sidebar-link {{ r starts with 'admin_client' ? 'active' }}">
+            <i class="fas fa-users"></i> Clients
+        </a>
+        <a href="{{ path('admin_avis_index') }}" class="sidebar-link {{ r starts with 'admin_avis' ? 'active' }}">
+            <i class="fas fa-star"></i> Avis
+        </a>
+
+        <div class="sidebar-section-title">Site</div>
+        <a href="{{ path('app_home') }}" class="sidebar-link" target="_blank">
+            <i class="fas fa-external-link-alt"></i> Voir le site
+        </a>
+        <a href="{{ path('admin_logout') }}" class="sidebar-link" style="color:#e05c5c">
+            <i class="fas fa-sign-out-alt"></i> Déconnexion
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        {% if app.user %}
+            <div class="user-info">Connecté en tant que</div>
+            <div class="user-name">{{ app.user.nomComplet }}</div>
+        {% endif %}
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="admin-main">
+    <!-- TOPBAR -->
+    <div class="admin-topbar">
+        <div>
+            <h4>{% block page_title %}Dashboard{% endblock %}</h4>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small">{{ "now"|date("d/m/Y") }}</span>
+            {% if app.user %}
+                <span class="badge" style="background:rgba(201,168,76,0.15);color:var(--admin-gold)">
+                    <i class="fas fa-user-shield me-1"></i>{{ app.user.prenom }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="flash-{{ type }} p-3 mx-3 mt-3 rounded d-flex align-items-center gap-2" style="font-size:0.875rem">
+                <i class="fas {% if type == 'success' %}fa-check-circle{% elseif type == 'warning' %}fa-exclamation-triangle{% else %}fa-times-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <!-- PAGE CONTENT -->
+    <div class="admin-content">
+        {% block body %}{% endblock %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

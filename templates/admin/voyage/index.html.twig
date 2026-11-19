@@ -1,0 +1,72 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Voyages{% endblock %}
+{% block page_title %}Gestion des voyages{% endblock %}
+
+{% block body %}
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ voyages|length }} voyage(s)</h6>
+        <a href="{{ path('admin_voyage_new') }}" class="btn btn-sm btn-admin-primary">
+            <i class="fas fa-plus me-1"></i>Nouveau voyage
+        </a>
+    </div>
+    <table class="table table-hover">
+        <thead>
+            <tr><th>Voyage</th><th>Société</th><th>Destination</th><th>Dates</th><th>Prix</th><th>Places</th><th>Statut</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for voyage in voyages %}
+            <tr>
+                <td>
+                    <div class="fw-500">{{ voyage.titre }}</div>
+                    <div class="text-muted" style="font-size:.75rem">{{ voyage.getDureeJours() }} jours</div>
+                </td>
+                <td>{{ voyage.societe ? voyage.societe.nom : '—' }}</td>
+                <td>{{ voyage.destination.nom }}, {{ voyage.destination.pays }}</td>
+                <td class="text-muted" style="font-size:.8rem">
+                    {{ voyage.dateDepart|date('d/m/Y') }}<br>{{ voyage.dateRetour|date('d/m/Y') }}
+                </td>
+                <td class="fw-bold" style="color:var(--admin-gold)">{{ voyage.prix|number_format(0,',','  ') }} €</td>
+                <td>
+                    <div>{{ voyage.placesRestantes }} / {{ voyage.nombrePlaces }} libres</div>
+                    <div class="text-muted" style="font-size:.75rem">
+                        <i class="fas fa-plane me-1"></i>{{ voyage.compagnieAerienne ? voyage.compagnieAerienne.label : '—' }}{{ voyage.numeroVol ? ' · ' ~ voyage.numeroVol : '' }}
+                    </div>
+                    <div class="progress mt-1" style="height:4px" title="{{ voyage.tauxRemplissage }}% rempli">
+                        <div class="progress-bar {{ voyage.complet ? 'bg-danger' : 'bg-success' }}" style="width:{{ voyage.tauxRemplissage }}%"></div>
+                    </div>
+                </td>
+                <td>
+                    {% if voyage.departPasse %}
+                        <span class="badge bg-warning text-dark">Passé</span>
+                    {% elseif not voyage.actif %}
+                        <span class="badge bg-secondary">Inactif</span>
+                    {% elseif voyage.complet %}
+                        <span class="badge bg-danger">Complet</span>
+                    {% else %}
+                        <span class="badge bg-success">Actif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ path('admin_voyage_edit', {id: voyage.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                        <form action="{{ path('admin_voyage_toggle', {id: voyage.id}) }}" method="POST" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ voyage.id) }}">
+                            <button class="btn btn-sm {{ voyage.actif ? 'btn-outline-warning' : 'btn-outline-success' }}" title="{{ voyage.actif ? 'Désactiver' : 'Activer' }}">
+                                <i class="fas {{ voyage.actif ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                            </button>
+                        </form>
+                        <form action="{{ path('admin_voyage_delete', {id: voyage.id}) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voyage.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Aucun voyage</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

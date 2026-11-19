@@ -1,0 +1,52 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Destinations{% endblock %}
+{% block page_title %}Destinations{% endblock %}
+
+{% block body %}
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ destinations|length }} destination(s)</h6>
+        <a href="{{ path('admin_destination_new') }}" class="btn btn-sm btn-admin-primary">
+            <i class="fas fa-plus me-1"></i>Nouvelle destination
+        </a>
+    </div>
+    <table class="table table-hover">
+        <thead>
+            <tr><th>Photo</th><th>Nom</th><th>Pays</th><th>Voyages</th><th>Hôtels</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for dest in destinations %}
+            <tr>
+                <td>
+                    {% if dest.photo %}
+                        <img src="/uploads/{{ dest.photo }}" style="width:50px;height:40px;object-fit:cover;border-radius:4px">
+                    {% else %}
+                        <div style="width:50px;height:40px;background:#f0f2f8;border-radius:4px;display:flex;align-items:center;justify-content:center">
+                            <i class="fas fa-image text-muted"></i>
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="fw-500">{{ dest.nom }}</td>
+                <td class="text-muted">{{ dest.pays }}</td>
+                <td><span class="badge bg-primary">{{ dest.voyages|length }}</span></td>
+                <td><span class="badge bg-info text-dark">{{ dest.hotels|length }}</span></td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('admin_destination_edit', {id: dest.id}) }}" class="btn btn-sm btn-outline-secondary" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ path('admin_destination_delete', {id: dest.id}) }}" method="POST"
+                              onsubmit="return confirm('Supprimer cette destination ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ dest.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Aucune destination</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

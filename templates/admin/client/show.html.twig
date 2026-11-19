@@ -1,0 +1,44 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Client {{ client.nomComplet }}{% endblock %}
+{% block page_title %}Fiche client{% endblock %}
+
+{% block body %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-body text-center">
+                <div style="width:80px;height:80px;background:rgba(201,168,76,.15);border:2px solid var(--admin-gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:var(--admin-gold);margin:0 auto 1rem">
+                    {{ client.prenom|slice(0,1)|upper }}{{ client.nom|slice(0,1)|upper }}
+                </div>
+                <h5>{{ client.nomComplet }}</h5>
+                <p class="text-muted small mb-3">{{ client.email }}</p>
+                <div class="row g-2 text-center mt-3">
+                    <div class="col-6"><div class="fw-bold fs-4" style="color:var(--admin-gold)">{{ client.reservations|length }}</div><div class="text-muted small">Réservations</div></div>
+                    <div class="col-6"><div class="fw-bold fs-4" style="color:var(--admin-gold)">{{ client.reservations|filter(r => r.statut.value == 'confirmee')|length }}</div><div class="text-muted small">Confirmées</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="admin-card mb-3">
+            <div class="admin-card-header"><h6 style="margin:0;font-weight:600">Réservations</h6></div>
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Référence</th><th>Voyage</th><th>Date</th><th>Total</th><th>Statut</th></tr></thead>
+                <tbody>
+                    {% for r in client.reservations %}
+                    <tr>
+                        <td><a href="{{ path('admin_reservation_show', {id: r.id}) }}" style="color:var(--admin-gold)">{{ r.reference }}</a></td>
+                        <td>{{ r.voyage.titre }}</td>
+                        <td>{{ r.createdAt|date('d/m/Y') }}</td>
+                        <td class="fw-bold">{{ r.prixTotal|number_format(0,',','  ') }} €</td>
+                        <td><span class="badge badge-{{ r.statut.value }}">{{ r.statut.label() }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-3">Aucune réservation</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

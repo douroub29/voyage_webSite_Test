@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+{% block title %}Récapitulatif de réservation{% endblock %}
+
+{% block extra_styles %}
+.recap-row { display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border-color);font-size:.9rem; }
+.recap-row:last-child { border-bottom:none; }
+.step-indicator { display:flex;gap:.5rem;margin-bottom:2rem; }
+.step { flex:1;height:4px;background:var(--border-color);border-radius:2px; }
+.step.done { background:var(--gradient); }
+{% endblock %}
+
+{% block body %}
+<div class="container py-5" style="max-width:860px">
+    <div class="mb-4">
+        <h1 class="section-title">Récapitulatif</h1>
+        <p class="text-muted">Vérifiez votre réservation avant de procéder au paiement</p>
+    </div>
+    <div class="step-indicator">
+        <div class="step done"></div>
+        <div class="step done"></div>
+        <div class="step"></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:12px;padding:2rem">
+                <h4 style="font-family:'Playfair Display',serif;margin-bottom:1.5rem">Détails de la réservation</h4>
+
+                <div class="recap-row">
+                    <span class="text-muted">Référence</span>
+                    <span class="text-gold fw-bold">{{ reservation.reference }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Voyage</span>
+                    <span>{{ reservation.voyage.titre }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Destination</span>
+                    <span>{{ reservation.voyage.destination.nom }}, {{ reservation.voyage.destination.pays }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Vol</span>
+                    <span>{{ reservation.voyage.compagnieAerienne ? reservation.voyage.compagnieAerienne.label : '—' }}{{ reservation.voyage.numeroVol ? ' · ' ~ reservation.voyage.numeroVol : '' }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Départ</span>
+                    <span>{{ reservation.voyage.dateDepart|date('d/m/Y') }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Retour</span>
+                    <span>{{ reservation.voyage.dateRetour|date('d/m/Y') }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Nombre de personnes</span>
+                    <span>{{ reservation.nombrePersonnes }}</span>
+                </div>
+                {% if reservation.hotel %}
+                <div class="recap-row">
+                    <span class="text-muted">Hôtel</span>
+                    <span>{{ reservation.hotel.nom }} ({{ reservation.nombreNuits }} nuits)</span>
+                </div>
+                {% endif %}
+                {% if reservation.chauffeur %}
+                <div class="recap-row">
+                    <span class="text-muted">Chauffeur</span>
+                    <span>{{ reservation.chauffeur.nomComplet }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted">Type de transfert</span>
+                    <span>{{ reservation.typeTransfert.label() }}</span>
+                </div>
+                {% endif %}
+
+                {% if reservation.voucher %}
+                <div class="recap-row">
+                    <span class="text-muted">Sous-total</span>
+                    <span>{{ reservation.calculerPrixBrut()|number_format(2, ',', ' ') }} €</span>
+                </div>
+                <div class="recap-row">
+                    <span class="text-muted"><i class="fas fa-ticket-alt text-gold me-1"></i>Voucher fidélité {{ reservation.voucher.code }} (-{{ reservation.voucher.pourcentage }} %)</span>
+                    <span style="color:#198754;font-weight:600">-{{ reservation.montantRemise|number_format(2, ',', ' ') }} €</span>
+                </div>
+                {% endif %}
+
+                <div class="recap-row mt-2" style="border-top:2px solid var(--gold)!important;padding-top:1rem;margin-top:.5rem">
+                    <span class="fw-bold" style="font-size:1.05rem">TOTAL</span>
+                    <span class="text-gold fw-bold" style="font-size:1.4rem;font-family:'Playfair Display',serif">
+                        {{ reservation.prixTotal|number_format(2, ',', ' ') }} €
+                    </span>
+                </div>
+            </div>
+
+            <!-- MODE DE PAIEMENT -->
+            <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:12px;padding:2rem;margin-top:1.5rem">
+                <h5 style="font-family:'Playfair Display',serif;margin-bottom:1.5rem">Mode de paiement</h5>
+                <form action="{{ path('reservation_paiement', {id: reservation.id}) }}" method="POST">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('paiement') }}">
+                    <div class="row g-3 mb-4">
+                        {% for methode in ['carte', 'paypal', 'virement', 'especes'] %}
+                        <div class="col-6">
+                            <label style="cursor:pointer;display:block">
+                                <input type="radio" name="methode" value="{{ methode }}" {% if methode == 'carte' %}checked{% endif %} style="display:none" class="methode-radio">
+                                <div class="methode-option p-3 rounded text-center" style="border:1px solid var(--border-color);border-radius:8px;transition:all .2s">
+                                    <i class="fas {{ methode == 'carte' ? 'fa-credit-card' : methode == 'paypal' ? 'fa-paypal' : methode == 'virement' ? 'fa-university' : 'fa-money-bill' }} fa-lg text-gold mb-2 d-block"></i>
+                                    <span class="small" style="color:var(--text-light)">
+                                        {{ methode == 'carte' ? 'Carte bancaire' : methode == 'paypal' ? 'PayPal' : methode == 'virement' ? 'Virement' : 'Espèces' }}
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn-gold w-100 text-center" style="display:block;padding:1rem;font-size:1rem">
+                        <i class="fas fa-lock me-2"></i>Confirmer et payer {{ reservation.prixTotal|number_format(0, ',', ' ') }} €
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div style="background:var(--dark-card);border:1px solid var(--gold-dark);border-radius:12px;padding:1.5rem">
+                <h6 class="text-gold text-uppercase mb-3" style="font-size:.8rem;letter-spacing:1px">Votre réservation</h6>
+                <div class="text-muted small">
+                    <div class="d-flex align-items-center gap-2 mb-2"><i class="fas fa-check-circle text-gold"></i> Confirmation immédiate par email</div>
+                    <div class="d-flex align-items-center gap-2 mb-2"><i class="fas fa-ticket-alt text-gold"></i> Voucher -10 % offert toutes les 5 réservations</div>
+                    <div class="d-flex align-items-center gap-2 mb-2"><i class="fas fa-shield-alt text-gold"></i> Paiement sécurisé 256-bit SSL</div>
+                    <div class="d-flex align-items-center gap-2"><i class="fas fa-headset text-gold"></i> Support 24/7 inclus</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.methode-radio').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.methode-option').forEach(el => {
+            el.style.borderColor = 'var(--border-color)';
+            el.style.background = 'transparent';
+        });
+        radio.closest('label').querySelector('.methode-option').style.borderColor = 'var(--gold)';
+        radio.closest('label').querySelector('.methode-option').style.background = 'rgba(201,168,76,0.08)';
+    });
+});
+document.querySelector('.methode-radio:checked')?.dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

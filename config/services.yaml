@@ -7,6 +7,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    uploads_directory: '%kernel.project_dir%/public/uploads'
 
 services:
     # default configuration for services in *this* file
@@ -19,5 +20,19 @@ services:
     App\:
         resource: '../src/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    App\Service\FileUploadService:
+        arguments:
+            $uploadsDirectory: '%uploads_directory%'
+
+    # IA : les clés se mettent dans .env.local, jamais dans git.
+    # Gemini (gratuit) est utilisé en priorité ; Claude (payant) seulement si sa clé est la seule configurée.
+    App\Service\IA\GeminiFournisseur:
+        arguments:
+            $apiKey: '%env(default::GEMINI_API_KEY)%'
+            $modele: '%env(GEMINI_MODEL)%'
+
+    App\Service\IA\ClaudeFournisseur:
+        arguments:
+            $apiKey: '%env(default::ANTHROPIC_API_KEY)%'
+
+    App\Service\IA\FournisseurIA: '@App\Service\IA\FournisseurIAChoisi'

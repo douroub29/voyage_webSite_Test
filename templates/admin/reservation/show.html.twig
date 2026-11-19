@@ -1,0 +1,117 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Réservation {{ reservation.reference }}{% endblock %}
+{% block page_title %}Réservation {{ reservation.reference }}{% endblock %}
+
+{% block body %}
+<div class="row g-4">
+    <div class="col-lg-8">
+
+        <!-- INFOS RESERVATION -->
+        <div class="admin-card mb-3">
+            <div class="admin-card-header">
+                <h6 style="margin:0;font-weight:600">Détails de la réservation</h6>
+                <span class="badge badge-{{ reservation.statut.value }} px-3 py-2">{{ reservation.statut.label() }}</span>
+            </div>
+            <div class="admin-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="text-muted small">Référence</div><div class="fw-bold" style="color:var(--admin-gold)">{{ reservation.reference }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Date de réservation</div><div>{{ reservation.createdAt|date('d/m/Y à H:i') }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Voyage</div><div class="fw-500">{{ reservation.voyage.titre }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Destination</div><div>{{ reservation.voyage.destination.nom }}, {{ reservation.voyage.destination.pays }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Date départ</div><div>{{ reservation.voyage.dateDepart|date('d/m/Y') }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Date retour</div><div>{{ reservation.voyage.dateRetour|date('d/m/Y') }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Personnes</div><div>{{ reservation.nombrePersonnes }}</div></div>
+                    {% if reservation.hotel %}
+                    <div class="col-md-6"><div class="text-muted small">Hôtel</div><div>{{ reservation.hotel.nom }} ({{ reservation.nombreNuits }} nuits)</div></div>
+                    {% endif %}
+                    {% if reservation.chauffeur %}
+                    <div class="col-md-6"><div class="text-muted small">Chauffeur</div><div>{{ reservation.chauffeur.nomComplet }}</div></div>
+                    <div class="col-md-6"><div class="text-muted small">Transfert</div><div>{{ reservation.typeTransfert.label() }}</div></div>
+                    {% endif %}
+                    {% if reservation.notes %}
+                    <div class="col-12"><div class="text-muted small">Notes</div><div class="fst-italic">{{ reservation.notes }}</div></div>
+                    {% endif %}
+                    <div class="col-12">
+                        <hr style="border-color:var(--admin-border)">
+                        {% if reservation.voucher %}
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted"><i class="fas fa-ticket-alt me-1"></i>Voucher fidélité {{ reservation.voucher.code }} (-{{ reservation.voucher.pourcentage }} %)</span>
+                            <span class="text-success">-{{ reservation.montantRemise|number_format(2,',','  ') }} €</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold fs-6">Total</span>
+                            <span class="fw-bold fs-5" style="color:var(--admin-gold)">{{ reservation.prixTotal|number_format(2,',','  ') }} €</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AFFECTER CHAUFFEUR -->
+        {% if not reservation.chauffeur %}
+        <div class="admin-card mb-3">
+            <div class="admin-card-header"><h6 style="margin:0;font-weight:600">Affecter un chauffeur</h6></div>
+            <div class="admin-card-body">
+                <form action="{{ path('admin_reservation_chauffeur', {id: reservation.id}) }}" method="POST" class="d-flex gap-3 align-items-end">
+                    <input type="hidden" name="_token" value="{{ csrf_token('chauffeur' ~ reservation.id) }}">
+                    <div class="flex-grow-1">
+                        <label class="form-label">Chauffeur disponible</label>
+                        <select name="chauffeur_id" class="form-select" required>
+                            <option value="">-- Choisir --</option>
+                            {% for c in chauffeurs %}
+                                <option value="{{ c.id }}">{{ c.nomComplet }} — {{ c.voiture }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-admin-primary">Affecter</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- CLIENT + ACTIONS -->
+    <div class="col-lg-4">
+        <div class="admin-card mb-3">
+            <div class="admin-card-header"><h6 style="margin:0;font-weight:600">Client</h6></div>
+            <div class="admin-card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width:48px;height:48px;background:#f0f2f8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#666">
+                        {{ reservation.client.prenom|slice(0,1)|upper }}{{ reservation.client.nom|slice(0,1)|upper }}
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ reservation.client.nomComplet }}</div>
+                        <div class="text-muted small">{{ reservation.client.email }}</div>
+                    </div>
+                </div>
+                {% if reservation.client.telephone %}
+                    <div class="text-muted small"><i class="fas fa-phone me-1"></i>{{ reservation.client.telephone }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="admin-card">
+            <div class="admin-card-header"><h6 style="margin:0;font-weight:600">Actions</h6></div>
+            <div class="admin-card-body">
+                <div class="d-flex flex-column gap-2">
+                    {% if reservation.statut.value == 'en_attente' %}
+                    <form action="{{ path('admin_reservation_confirmer', {id: reservation.id}) }}" method="POST">
+                        <input type="hidden" name="_token" value="{{ csrf_token('confirmer' ~ reservation.id) }}">
+                        <button class="btn btn-success w-100"><i class="fas fa-check me-2"></i>Confirmer la réservation</button>
+                    </form>
+                    {% endif %}
+                    {% if reservation.statut.value != 'annulee' %}
+                    <form action="{{ path('admin_reservation_annuler', {id: reservation.id}) }}" method="POST" onsubmit="return confirm('Annuler cette réservation ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('annuler' ~ reservation.id) }}">
+                        <button class="btn btn-outline-danger w-100"><i class="fas fa-times me-2"></i>Annuler</button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ path('admin_reservation_index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Retour à la liste</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

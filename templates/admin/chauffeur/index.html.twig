@@ -1,0 +1,46 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Chauffeurs{% endblock %}
+{% block page_title %}Gestion des chauffeurs{% endblock %}
+
+{% block body %}
+<div class="admin-table">
+    <div class="table-header">
+        <h6 style="margin:0;font-size:.875rem;font-weight:600">{{ chauffeurs|length }} chauffeur(s)</h6>
+        <a href="{{ path('admin_chauffeur_new') }}" class="btn btn-sm btn-admin-primary"><i class="fas fa-plus me-1"></i>Nouveau chauffeur</a>
+    </div>
+    <table class="table table-hover">
+        <thead><tr><th>Photo</th><th>Nom complet</th><th>Téléphone</th><th>Véhicule</th><th>Prix transfert</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for chauffeur in chauffeurs %}
+            <tr>
+                <td>
+                    {% if chauffeur.photo %}
+                        <img src="/uploads/{{ chauffeur.photo }}" style="width:44px;height:44px;object-fit:cover;border-radius:50%">
+                    {% else %}
+                        <div style="width:44px;height:44px;background:#e9ecef;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;color:#666">
+                            {{ chauffeur.prenom|slice(0,1)|upper }}
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="fw-500">{{ chauffeur.nomComplet }}</td>
+                <td class="text-muted">{{ chauffeur.telephone }}</td>
+                <td>{{ chauffeur.voiture }}</td>
+                <td class="fw-bold" style="color:var(--admin-gold)">{{ chauffeur.prixTransfert|number_format(0,',','  ') }} €</td>
+                <td><span class="badge {{ chauffeur.actif ? 'bg-success' : 'bg-secondary' }}">{{ chauffeur.actif ? 'Actif' : 'Inactif' }}</span></td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ path('admin_chauffeur_edit', {id: chauffeur.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                        <form action="{{ path('admin_chauffeur_delete', {id: chauffeur.id}) }}" method="POST" onsubmit="return confirm('Supprimer ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ chauffeur.id) }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Aucun chauffeur</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher {{ voucher.code }} — DreamTravel</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 24px; background: #f6f7fb; font-family: Helvetica, Arial, sans-serif; color: #1d2233; }
+        .ticket { max-width: 720px; margin: 0 auto; background: #fff; border: 2px dashed #b8892d; border-radius: 14px; overflow: hidden; }
+        .ticket-head { background: #b8892d; color: #fff; padding: 18px 28px; }
+        .ticket-head .brand { font-size: 22px; font-weight: bold; letter-spacing: 2px; }
+        .ticket-head .sub { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: .9; }
+        .ticket-body { padding: 28px; }
+        .remise { font-size: 56px; font-weight: bold; color: #b8892d; line-height: 1; }
+        .remise small { font-size: 18px; color: #1d2233; font-weight: normal; }
+        .code { display: inline-block; margin-top: 18px; padding: 10px 18px; border: 1px solid #e4e7ef; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 22px; letter-spacing: 3px; background: #fbf6ea; }
+        table.infos { width: 100%; margin-top: 24px; border-collapse: collapse; font-size: 14px; }
+        table.infos td { padding: 6px 0; border-bottom: 1px solid #eef0f5; }
+        table.infos td.label { color: #6b7280; width: 45%; }
+        .statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .statut.ok { background: #e8f5ee; color: #0f5132; }
+        .statut.used { background: #eef0f5; color: #6b7280; }
+        .note { margin-top: 20px; font-size: 12px; color: #6b7280; line-height: 1.6; }
+        .actions { max-width: 720px; margin: 18px auto 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .btn { display: inline-block; padding: 10px 18px; border-radius: 6px; font-size: 14px; text-decoration: none; cursor: pointer; border: 1px solid #b8892d; }
+        .btn-primary { background: #b8892d; color: #fff; }
+        .btn-outline { background: #fff; color: #b8892d; }
+        @media print { body { background: #fff; padding: 0; } .actions { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="ticket-head">
+            <div class="brand">DREAMTRAVEL</div>
+            <div class="sub">Voucher fidélité — Remise sur votre prochaine réservation</div>
+        </div>
+        <div class="ticket-body">
+            <div class="remise">-{{ voucher.pourcentage }}&nbsp;% <small>sur votre prochaine réservation</small></div>
+            <div class="code">{{ voucher.code }}</div>
+
+            <table class="infos">
+                <tr><td class="label">Titulaire</td><td>{{ voucher.client.nomComplet }}</td></tr>
+                <tr><td class="label">Email</td><td>{{ voucher.client.email }}</td></tr>
+                <tr><td class="label">Émis le</td><td>{{ voucher.createdAt|date('d/m/Y à H:i') }}</td></tr>
+                <tr>
+                    <td class="label">Statut</td>
+                    <td>
+                        {% if voucher.utilise %}
+                            <span class="statut used">Utilisé — réservation {{ voucher.reservation.reference }}</span>
+                        {% else %}
+                            <span class="statut ok">Disponible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+
+            <p class="note">
+                Ce voucher est enregistré sur votre compte DreamTravel : vous n'avez rien à saisir.
+                La remise est appliquée <strong>automatiquement</strong> sur le prix total de votre prochaine réservation.
+                Si cette réservation est annulée, le voucher redevient disponible.
+            </p>
+        </div>
+    </div>
+
+    {% if not pourPdf %}
+    <div class="actions">
+        <button type="button" class="btn btn-primary" onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+        <a class="btn btn-outline" href="{{ path('profil_reservations') }}">Mes réservations</a>
+        <a class="btn btn-outline" href="{{ path('app_voyages') }}">Réserver un voyage</a>
+    </div>
+    {% endif %}
+</body>
+</html>

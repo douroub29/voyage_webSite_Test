@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+{% block title %}Inscription{% endblock %}
+
+{% block extra_styles %}
+.auth-wrapper { min-height: 90vh; display: flex; align-items: center; background: radial-gradient(ellipse at center, var(--dark-card) 0%, var(--dark-bg) 70%); padding: 3rem 0; }
+.auth-card { background: var(--dark-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 2.5rem; }
+.form-control { background: var(--input-bg) !important; border: 1px solid var(--border-color) !important; color: var(--text-light) !important; padding: .75rem 1rem; border-radius: 6px; }
+.form-control:focus { border-color: var(--gold) !important; box-shadow: 0 0 0 0.15rem rgba(201,168,76,0.2) !important; }
+{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="auth-card">
+                    <div class="text-center mb-4">
+                        <div class="text-gold mb-2" style="font-size:2rem">✈</div>
+                        <h2 style="font-family:'Playfair Display',serif">Créer un compte</h2>
+                        <p class="text-muted small">Rejoignez DreamTravel et partez à l'aventure</p>
+                    </div>
+
+                    {% for type, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="flash-{{ type }} p-3 rounded mb-3">{{ message }}</div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                {{ form_label(form.prenom) }}
+                                {{ form_widget(form.prenom, {attr: {class: 'form-control', placeholder: 'Jean'}}) }}
+                                {{ form_errors(form.prenom) }}
+                            </div>
+                            <div class="col-6">
+                                {{ form_label(form.nom) }}
+                                {{ form_widget(form.nom, {attr: {class: 'form-control', placeholder: 'Dupont'}}) }}
+                                {{ form_errors(form.nom) }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.email) }}
+                            {{ form_widget(form.email, {attr: {class: 'form-control', placeholder: 'votre@email.com'}}) }}
+                            {{ form_errors(form.email) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.telephone) }}
+                            {{ form_widget(form.telephone, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.telephone) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.dateNaissance) }}
+                            {{ form_widget(form.dateNaissance, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(form.dateNaissance) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(form.plainPassword.first) }}
+                            {{ form_widget(form.plainPassword.first, {attr: {class: 'form-control', placeholder: 'Minimum 8 caractères'}}) }}
+                            {{ form_errors(form.plainPassword.first) }}
+                        </div>
+                        <div class="mb-4">
+                            {{ form_label(form.plainPassword.second) }}
+                            {{ form_widget(form.plainPassword.second, {attr: {class: 'form-control', placeholder: 'Répétez le mot de passe'}}) }}
+                            {{ form_errors(form.plainPassword.second) }}
+                        </div>
+                        <button type="submit" class="btn-gold w-100 text-center" style="display:block;padding:.85rem;font-size:.95rem">
+                            <i class="fas fa-user-plus me-2"></i>Créer mon compte
+                        </button>
+                    {{ form_end(form) }}
+
+                    <hr class="divider-gold mt-4">
+                    <p class="text-center text-muted small mb-0">
+                        Déjà un compte ? <a href="{{ path('app_login') }}" class="text-gold">Se connecter</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
