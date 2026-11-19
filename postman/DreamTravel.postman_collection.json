@@ -1,0 +1,331 @@
+{
+  "info": {
+    "name": "DreamTravel",
+    "description": "Tests manuels et automatiques de DreamTravel.\n\n1. Démarrez le site (http://127.0.0.1:8000) avec les données de démonstration (fixtures).\n2. Importez cette collection dans Postman, puis « Run collection » pour tout exécuter dans l'ordre.\n\nLes dossiers « Parcours client », « Parcours admin » et « Chatbot » enchaînent leurs requêtes (jetons CSRF et cookie de session récupérés automatiquement) : lancez-les en entier, dans l'ordre.\n\nComptes de démonstration : sophie@example.com / Client@1234, admin@dreamtravel.com / Admin@1234.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "clientEmail", "value": "sophie@example.com" },
+    { "key": "clientPassword", "value": "Client@1234" },
+    { "key": "adminEmail", "value": "admin@dreamtravel.com" },
+    { "key": "adminPassword", "value": "Admin@1234" },
+    { "key": "voyageId", "value": "1" },
+    { "key": "loginCsrf", "value": "" },
+    { "key": "assistantCsrf", "value": "" },
+    { "key": "questionLongue", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Temps de réponse < 5 s', () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. API catalogue (JSON)",
+      "description": "API publique en lecture seule : /api/voyages, /api/voyages/{id}, /api/societes.",
+      "item": [
+        {
+          "name": "Liste des voyages",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 + JSON', () => { pm.response.to.have.status(200); pm.response.to.be.json; });",
+            "const d = pm.response.json();",
+            "pm.test('total = nombre de voyages renvoyés', () => pm.expect(d.total).to.eql(d.voyages.length));",
+            "pm.test('Au moins un voyage', () => pm.expect(d.total).to.be.above(0));",
+            "pm.test('Champs attendus', () => d.voyages.forEach(v => pm.expect(v).to.include.all.keys('id','titre','destination','societe','dateDepart','dateRetour','dureeNuits','prixParPersonne','placesRestantes','reservable','photo','url')));",
+            "pm.test('Voyages proposés : départ à venir', () => { const today = new Date().toISOString().slice(0,10); d.voyages.forEach(v => pm.expect(v.dateDepart > today).to.be.true); });",
+            "pm.collectionVariables.set('voyageId', d.voyages[0].id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/voyages" }
+        },
+        {
+          "name": "Filtre par société (atlas)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const d = pm.response.json();",
+            "pm.test('Uniquement des voyages Atlas Voyages', () => { pm.expect(d.total).to.be.above(0); d.voyages.forEach(v => pm.expect(v.societe).to.eql('Atlas Voyages')); });",
+            "pm.test('Filtre rappelé dans la réponse', () => pm.expect(d.filtres.societe).to.eql('atlas'));"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/voyages?societe=atlas", "host": ["{{baseUrl}}"], "path": ["api", "voyages"], "query": [{ "key": "societe", "value": "atlas" }] } }
+        },
+        {
+          "name": "Filtres budget + nombre de personnes",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "pm.test('Prix ≤ 1500 € et au moins 2 places', () => pm.response.json().voyages.forEach(v => { pm.expect(v.prixParPersonne).to.be.at.most(1500); pm.expect(v.placesRestantes).to.be.at.least(2); }));"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/voyages?budget=1500&personnes=2", "host": ["{{baseUrl}}"], "path": ["api", "voyages"], "query": [{ "key": "budget", "value": "1500" }, { "key": "personnes", "value": "2" }] } }
+        },
+        {
+          "name": "Destination inconnue (Japon)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Aucun voyage inventé', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().total).to.eql(0); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/voyages?destination=Japon", "host": ["{{baseUrl}}"], "path": ["api", "voyages"], "query": [{ "key": "destination", "value": "Japon" }] } }
+        },
+        {
+          "name": "Paramètres invalides → 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400', () => pm.response.to.have.status(400));",
+            "pm.test('Détail des erreurs par paramètre', () => pm.expect(pm.response.json().details).to.have.all.keys('budget','date_depart','personnes'));"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/voyages?budget=abc&date_depart=31/12/2026&personnes=0", "host": ["{{baseUrl}}"], "path": ["api", "voyages"], "query": [{ "key": "budget", "value": "abc" }, { "key": "date_depart", "value": "31/12/2026" }, { "key": "personnes", "value": "0" }] } }
+        },
+        {
+          "name": "Détail d'un voyage",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const v = pm.response.json();",
+            "pm.test('Bon voyage', () => pm.expect(String(v.id)).to.eql(String(pm.collectionVariables.get('voyageId'))));",
+            "pm.test('Détails complets', () => pm.expect(v).to.include.all.keys('description','compagnieAerienne','numeroVol','motifNonReservable','hotels'));",
+            "pm.test('Hôtels avec prix par nuit', () => v.hotels.forEach(h => pm.expect(h.prixParNuit).to.be.a('number')));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/voyages/{{voyageId}}" }
+        },
+        {
+          "name": "Voyage inexistant → 404 JSON",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404 en JSON', () => { pm.response.to.have.status(404); pm.response.to.be.json; pm.expect(pm.response.json().erreur).to.include('introuvable'); });"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/voyages/999999" }
+        },
+        {
+          "name": "Méthode interdite → 405 JSON",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('405 en JSON', () => { pm.response.to.have.status(405); pm.expect(pm.response.json().statut).to.eql(405); });"
+          ]}}],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/voyages" }
+        },
+        {
+          "name": "Sociétés de voyage",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const d = pm.response.json();",
+            "pm.test('total = nombre de sociétés', () => pm.expect(d.total).to.eql(d.societes.length));",
+            "pm.test('Nom + nombre de voyages', () => d.societes.forEach(s => { pm.expect(s.nom).to.be.a('string'); pm.expect(s.voyagesProposes).to.be.a('number'); }));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/societes" }
+        }
+      ]
+    },
+    {
+      "name": "2. Pages du site (HTML)",
+      "item": [
+        {
+          "name": "Accueil",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const html = pm.response.text();",
+            "pm.test('« Voyages à la Une » avec photos', () => { pm.expect(html).to.include('Voyages à la Une'); pm.expect(html).to.include('/uploads/voyages/'); });",
+            "pm.test('« Nos Destinations » supprimé', () => pm.expect(html).to.not.include('Nos Destinations'));",
+            "pm.test('Widget chatbot présent', () => pm.expect(html).to.include('assistant-panneau'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/" }
+        },
+        {
+          "name": "Liste des voyages filtrée par société",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const html = pm.response.text();",
+            "pm.test('Boutons « Voir le détail »', () => pm.expect(html).to.include('Voir le détail'));",
+            "pm.test('Voyages Atlas uniquement', () => { pm.expect(html).to.include('Marrakech'); pm.expect(html).to.not.include('Week-end Romantique'); });"
+          ]}}],
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/voyages?societe=atlas", "host": ["{{baseUrl}}"], "path": ["voyages"], "query": [{ "key": "societe", "value": "atlas" }] } }
+        },
+        {
+          "name": "Espace client sans connexion → /connexion",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Redirection vers la connexion', () => { pm.response.to.have.status(302); pm.expect(pm.response.headers.get('Location')).to.include('/connexion'); });"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/mon-compte" }
+        }
+      ]
+    },
+    {
+      "name": "3. Parcours client (à lancer en entier)",
+      "item": [
+        {
+          "name": "Page de connexion (récupère le jeton CSRF)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const m = pm.response.text().match(/name=\"_csrf_token\" value=\"([^\"]+)\"/);",
+            "pm.test('Jeton CSRF trouvé', () => pm.expect(m).to.not.be.null);",
+            "pm.collectionVariables.set('loginCsrf', m[1]);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/connexion" }
+        },
+        {
+          "name": "Connexion client",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Connecté (302)', () => pm.response.to.have.status(302));",
+            "pm.test('Pas envoyé vers /connexion (mot de passe correct)', () => pm.expect(pm.response.headers.get('Location')).to.not.include('/connexion'));",
+            "pm.test('Un client ne va pas sur /admin', () => pm.expect(pm.response.headers.get('Location')).to.not.include('/admin'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Origin", "value": "{{baseUrl}}" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "{{clientEmail}}" },
+              { "key": "password", "value": "{{clientPassword}}" },
+              { "key": "_csrf_token", "value": "{{loginCsrf}}" }
+            ]},
+            "url": "{{baseUrl}}/connexion"
+          }
+        },
+        {
+          "name": "Mon compte",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "pm.test('Page compte + bloc fidélité', () => { pm.expect(pm.response.text()).to.include('Mon compte'); pm.expect(pm.response.text()).to.include('Voucher fidélité'); });"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/mon-compte" }
+        },
+        {
+          "name": "Voucher refusé sous 5 réservations",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Redirigé vers Mes réservations', () => { pm.response.to.have.status(302); pm.expect(pm.response.headers.get('Location')).to.include('/mon-compte/reservations'); });"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/mon-compte/voucher" }
+        },
+        {
+          "name": "Recommandations personnalisées",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "pm.test('Voyages recommandés avec raison', () => pm.expect(pm.response.text()).to.match(/card-dt|Aucune recommandation/));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/mon-compte/recommandations" }
+        },
+        {
+          "name": "Déconnexion",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Déconnecté', () => pm.response.to.have.status(302));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/deconnexion" }
+        }
+      ]
+    },
+    {
+      "name": "4. Parcours admin (à lancer en entier)",
+      "item": [
+        {
+          "name": "Page de connexion (récupère le jeton CSRF)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const m = pm.response.text().match(/name=\"_csrf_token\" value=\"([^\"]+)\"/);",
+            "pm.test('Jeton CSRF trouvé', () => pm.expect(m).to.not.be.null);",
+            "pm.collectionVariables.set('loginCsrf', m[1]);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/connexion" }
+        },
+        {
+          "name": "Connexion admin → tableau de bord direct",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Redirigé directement vers /admin', () => { pm.response.to.have.status(302); pm.expect(pm.response.headers.get('Location')).to.match(/\\/admin$/); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Origin", "value": "{{baseUrl}}" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "{{adminEmail}}" },
+              { "key": "password", "value": "{{adminPassword}}" },
+              { "key": "_csrf_token", "value": "{{loginCsrf}}" }
+            ]},
+            "url": "{{baseUrl}}/connexion"
+          }
+        },
+        {
+          "name": "Tableau de bord admin",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "pm.test('Menu admin avec Sociétés', () => { pm.expect(pm.response.text()).to.include('sidebar-nav'); pm.expect(pm.response.text()).to.include('Sociétés'); });"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin" }
+        },
+        {
+          "name": "Déconnexion admin",
+          "protocolProfileBehavior": { "followRedirects": false },
+          "request": { "method": "GET", "url": "{{baseUrl}}/admin/deconnexion" }
+        }
+      ]
+    },
+    {
+      "name": "5. Chatbot (API JSON, à lancer en entier)",
+      "description": "Nécessite GEMINI_API_KEY dans .env.local pour de vraies réponses ; sinon l'assistant répond qu'il n'est pas activé.",
+      "item": [
+        {
+          "name": "Accueil (récupère le jeton du chatbot)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const m = pm.response.text().match(/const csrf = '([^']+)'/);",
+            "pm.test('Jeton du chatbot trouvé', () => pm.expect(m).to.not.be.null);",
+            "pm.collectionVariables.set('assistantCsrf', m[1]);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/" }
+        },
+        {
+          "name": "Question : voyages à moins de 1500 €",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 + réponse texte', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().reponse).to.be.a('string').and.not.empty; });",
+            "console.log('Réponse du chatbot :', pm.response.json().reponse);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-CSRF-Token", "value": "{{assistantCsrf}}" }],
+            "body": { "mode": "raw", "raw": "{\"message\": \"Quels voyages pour moins de 1500 € ?\"}" },
+            "url": "{{baseUrl}}/assistant/message"
+          }
+        },
+        {
+          "name": "Jeton invalide → 403",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 + message', () => { pm.response.to.have.status(403); pm.expect(pm.response.json().erreur).to.be.a('string'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-CSRF-Token", "value": "jeton-invalide" }],
+            "body": { "mode": "raw", "raw": "{\"message\": \"Bonjour\"}" },
+            "url": "{{baseUrl}}/assistant/message"
+          }
+        },
+        {
+          "name": "Message vide → 422",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('422', () => pm.response.to.have.status(422));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-CSRF-Token", "value": "{{assistantCsrf}}" }],
+            "body": { "mode": "raw", "raw": "{\"message\": \"   \"}" },
+            "url": "{{baseUrl}}/assistant/message"
+          }
+        },
+        {
+          "name": "Question trop longue (501 caractères) → 422",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "pm.collectionVariables.set('questionLongue', 'a'.repeat(501));"
+            ]}},
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('422 + limite indiquée', () => { pm.response.to.have.status(422); pm.expect(pm.response.json().erreur).to.include('500'); });"
+            ]}}
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-CSRF-Token", "value": "{{assistantCsrf}}" }],
+            "body": { "mode": "raw", "raw": "{\"message\": \"{{questionLongue}}\"}" },
+            "url": "{{baseUrl}}/assistant/message"
+          }
+        }
+      ]
+    }
+  ]
+}
