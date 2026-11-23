@@ -32,6 +32,25 @@ class Destination
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photo = null;
 
+    /** Coordonnées GPS : météo historique (Open-Meteo). */
+    #[ORM\Column(type: 'float', nullable: true)]
+    #[Assert\Range(min: -90, max: 90)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    #[Assert\Range(min: -180, max: 180)]
+    private ?float $longitude = null;
+
+    /** Code pays ISO 3166-1 alpha-2 (ex. FR) : jours fériés (Nager.Date). */
+    #[ORM\Column(length: 2, nullable: true)]
+    #[Assert\Regex(pattern: '/^[A-Z]{2}$/', message: 'Code pays ISO à 2 lettres majuscules (ex. FR).')]
+    private ?string $codePays = null;
+
+    /** Durée approximative du vol depuis Tunis, en heures (planificateur par ambiance). */
+    #[ORM\Column(type: 'float', nullable: true)]
+    #[Assert\Range(min: 0, max: 30)]
+    private ?float $dureeVolHeures = null;
+
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -61,6 +80,20 @@ class Destination
 
     public function getPhoto(): ?string { return $this->photo; }
     public function setPhoto(?string $photo): static { $this->photo = $photo; return $this; }
+
+    public function getLatitude(): ?float { return $this->latitude; }
+    public function setLatitude(?float $latitude): static { $this->latitude = $latitude; return $this; }
+
+    public function getLongitude(): ?float { return $this->longitude; }
+    public function setLongitude(?float $longitude): static { $this->longitude = $longitude; return $this; }
+
+    public function hasCoordonnees(): bool { return $this->latitude !== null && $this->longitude !== null; }
+
+    public function getCodePays(): ?string { return $this->codePays; }
+    public function setCodePays(?string $codePays): static { $this->codePays = $codePays ? strtoupper(trim($codePays)) : null; return $this; }
+
+    public function getDureeVolHeures(): ?float { return $this->dureeVolHeures; }
+    public function setDureeVolHeures(?float $dureeVolHeures): static { $this->dureeVolHeures = $dureeVolHeures; return $this; }
 
     public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
     public function setCreatedAt(\DateTimeInterface $createdAt): static { $this->createdAt = $createdAt; return $this; }

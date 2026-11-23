@@ -6,6 +6,7 @@ use App\Entity\Client;
 use App\Exception\VoucherException;
 use App\Service\AvisService;
 use App\Service\IA\RecommandationService;
+use App\Service\Prix\GelPrixManager;
 use App\Service\VoucherManager;
 use App\Service\VoucherService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,13 +31,14 @@ class ProfilController extends AbstractController
     }
 
     #[Route('/reservations', name: 'profil_reservations')]
-    public function reservations(VoucherManager $voucherManager): Response
+    public function reservations(VoucherManager $voucherManager, GelPrixManager $gelPrixManager): Response
     {
         $client = $this->getClient();
 
         return $this->render('profil/reservations.html.twig', [
             'reservations' => $client->getReservations(),
             'fidelite'     => $this->fidelite($client, $voucherManager),
+            'gels'         => $gelPrixManager->getGelsClient($client),
         ]);
     }
 
@@ -101,8 +103,10 @@ class ProfilController extends AbstractController
             'confirmees'  => $client->getNombreReservationsConfirmees(),
             'seuil'       => VoucherManager::SEUIL_RESERVATIONS,
             'manquantes'  => $voucherManager->getReservationsManquantes($client),
-            'pourcentage' => VoucherManager::POURCENTAGE_REMISE,
+            'pourcentage' => $voucherManager->getProchainPourcentage($client),
+            'paliers'     => VoucherManager::PALIERS_REMISE,
             'disponible'  => $voucherManager->getVoucherDisponible($client),
+            'aTelecharger'=> $voucherManager->getNombreVouchersGagnes($client) > $client->getVouchers()->count(),
             'vouchers'    => $client->getVouchers(),
         ];
     }

@@ -29,6 +29,16 @@
                         {{ form_widget(form.description, {attr: {class: 'form-control', rows: 5}}) }}
                         {{ form_errors(form.description) }}
                     </div>
+                    <div class="row g-3 mb-3">
+                        {% for champ in [form.latitude, form.longitude, form.codePays, form.dureeVolHeures] %}
+                        <div class="col-md-3">
+                            {{ form_label(champ) }}
+                            {{ form_widget(champ, {attr: {class: 'form-control'}}) }}
+                            {{ form_errors(champ) }}
+                        </div>
+                        {% endfor %}
+                        <div class="col-12 text-muted small mt-1">Utilisés pour la météo historique, les jours fériés et le planificateur par ambiance.</div>
+                    </div>
                     <div class="mb-4">
                         {{ form_label(form.photoFile) }}
                         {{ form_widget(form.photoFile, {attr: {class: 'form-control'}}) }}

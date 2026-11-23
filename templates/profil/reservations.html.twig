@@ -12,6 +12,33 @@
 
     {{ include('profil/_fidelite.html.twig') }}
 
+    {% if gels is not empty %}
+    <section class="mb-5">
+        <h2 class="section-title" style="font-size:1.4rem">Mes prix gelés</h2>
+        <div class="row g-3 mt-1">
+            {% for gel in gels %}
+                {% set statut = gel.utilise ? 'Utilisé' : (gel.expire ? 'Expiré' : 'Actif') %}
+                <div class="col-md-6 col-lg-4">
+                    <div style="background:var(--dark-card);border:1px solid {{ statut == 'Actif' ? '#4a90d9' : 'var(--border-color)' }};border-radius:10px;padding:1rem">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('app_voyage_show', {id: gel.voyage.id}) }}" class="fw-semibold">{{ gel.voyage.titre }}</a>
+                            <span class="small fw-semibold" style="color:{{ statut == 'Actif' ? '#1f5f9e' : '#6c757d' }}"><i class="fas fa-snowflake me-1"></i>{{ statut }}</span>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Gelé à <strong>{{ gel.prixGele|number_format(0, ',', ' ') }} €</strong> / pers. (prix actuel {{ gel.voyage.prix|number_format(0, ',', ' ') }} €)<br>
+                            {% if statut == 'Actif' %}Expire le {{ gel.expireLe|date('d/m/Y à H:i') }}{% elseif statut == 'Utilisé' %}Réservation {{ gel.reservation.reference }}{% else %}Expiré le {{ gel.expireLe|date('d/m/Y') }}{% endif %}
+                            · frais {{ gel.frais|number_format(2, ',', ' ') }} €
+                        </div>
+                        {% if statut == 'Actif' and gel.voyage.reservable %}
+                            <a href="{{ path('reservation_nouvelle', {id: gel.voyage.id}) }}" class="btn-gold mt-2" style="font-size:.75rem;padding:.4rem .9rem">Réserver à ce prix</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     {{ include('profil/_bloc_recommandations.html.twig', {classe: 'mb-5', taille: '1.4rem'}) }}
 
     {% if reservations|length == 0 %}

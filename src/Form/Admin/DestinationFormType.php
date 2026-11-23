@@ -5,6 +5,7 @@ namespace App\Form\Admin;
 use App\Entity\Destination;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -19,6 +20,10 @@ class DestinationFormType extends AbstractType
             ->add('nom',         TextType::class,     ['label' => 'Nom de la destination'])
             ->add('pays',        TextType::class,     ['label' => 'Pays'])
             ->add('description', TextareaType::class, ['label' => 'Description', 'attr' => ['rows' => 5]])
+            ->add('latitude',       NumberType::class, ['label' => 'Latitude',  'required' => false, 'scale' => 4, 'attr' => ['placeholder' => '48.8566']])
+            ->add('longitude',      NumberType::class, ['label' => 'Longitude', 'required' => false, 'scale' => 4, 'attr' => ['placeholder' => '2.3522']])
+            ->add('codePays',       TextType::class,   ['label' => 'Code pays (ISO)', 'required' => false, 'attr' => ['placeholder' => 'FR', 'maxlength' => 2]])
+            ->add('dureeVolHeures', NumberType::class, ['label' => 'Vol depuis Tunis (h)', 'required' => false, 'scale' => 1, 'attr' => ['placeholder' => '2.5']])
             ->add('photoFile',   FileType::class, [
                 'label'    => 'Photo (JPG, PNG, WEBP)',
                 'mapped'   => false,

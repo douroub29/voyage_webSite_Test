@@ -10,15 +10,15 @@
                     Vous avez un voucher <strong class="text-gold">-{{ fidelite.disponible.pourcentage }} %</strong>
                     ({{ fidelite.disponible.code }}) : il sera appliqué automatiquement à votre prochaine réservation.
                 </div>
-            {% elseif fidelite.eligible %}
+            {% elseif fidelite.aTelecharger %}
                 <div class="small text-muted">
-                    Félicitations ! Avec {{ fidelite.confirmees }} réservations confirmées, vous avez droit à un voucher
+                    Félicitations ! Avec {{ fidelite.confirmees }} réservations confirmées, vous avez droit à un nouveau voucher
                     <strong class="text-gold">-{{ fidelite.pourcentage }} %</strong> sur votre prochaine réservation.
                 </div>
             {% else %}
                 <div class="small text-muted">
-                    Option réservée aux clients ayant <strong>{{ fidelite.seuil }} réservations confirmées</strong>.
-                    Encore <strong>{{ fidelite.manquantes }}</strong> réservation(s) pour obtenir -{{ fidelite.pourcentage }} % sur la suivante.
+                    {% if fidelite.vouchers|length == 0 %}Option réservée aux clients ayant <strong>{{ fidelite.seuil }} réservations confirmées</strong>.{% endif %}
+                    Encore <strong>{{ fidelite.manquantes }}</strong> réservation(s) pour obtenir <strong class="text-gold">-{{ fidelite.pourcentage }} %</strong> sur la suivante.
                 </div>
                 {% set progression = (fidelite.confirmees % fidelite.seuil) / fidelite.seuil * 100 %}
                 <div class="mt-2" style="height:6px;background:var(--border-color);border-radius:3px;max-width:320px">
@@ -28,11 +28,20 @@
             {% endif %}
         </div>
 
-        {% if fidelite.eligible %}
+        {% if fidelite.disponible or fidelite.aTelecharger %}
             <a href="{{ path('profil_voucher') }}" class="btn-gold" target="_blank" style="padding:.7rem 1.4rem">
                 <i class="fas fa-download me-1"></i>Télécharger voucher
             </a>
         {% endif %}
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap mt-3 small">
+        {% for p in fidelite.paliers %}
+            {% set atteint = fidelite.vouchers|length >= loop.index %}
+            <span style="border:1px solid {{ atteint ? 'var(--gold)' : 'var(--border-color)' }};border-radius:20px;padding:.2rem .7rem;{{ atteint ? 'background:var(--gold-soft);color:var(--gold-dark);font-weight:600' : 'color:#6c757d' }}">
+                {% if atteint %}<i class="fas fa-check me-1"></i>{% endif %}{{ loop.index * fidelite.seuil }}{{ loop.last ? '+' }} réservations : -{{ p }} %
+            </span>
+        {% endfor %}
     </div>
 
     {% if fidelite.vouchers|length > 0 %}

@@ -64,9 +64,28 @@ class VoucherManagerTest extends TestCase
         $voucher = $this->manager->obtenirVoucher($client);
 
         self::assertSame($client, $voucher->getClient());
-        self::assertSame(VoucherManager::POURCENTAGE_REMISE, $voucher->getPourcentage());
+        self::assertSame(10, $voucher->getPourcentage());
         self::assertStringStartsWith('VCH-', $voucher->getCode());
         self::assertFalse($voucher->isUtilise());
+    }
+
+    /** 1er voucher -10 % (5e réservation), 2e -20 % (10e), 3e -30 % (15e), puis -30 % ensuite. */
+    public function testLaRemiseAugmenteAChaqueNouveauVoucher(): void
+    {
+        foreach ([[10, 1, 20], [15, 2, 30], [20, 3, 30], [25, 4, 30]] as [$confirmees, $dejaEmis, $attendu]) {
+            $repo = $this->createMock(\App\Repository\VoucherRepository::class);
+            $repo->method('findPremierDisponible')->willReturn(null);
+            $repo->method('countPourClient')->willReturn($dejaEmis);
+            $manager = new VoucherManager($repo, $this->createMock(\Doctrine\ORM\EntityManagerInterface::class));
+
+            self::assertSame($attendu, $manager->getProchainPourcentage(self::client($confirmees)), "$confirmees réservations");
+            self::assertSame($attendu, $manager->obtenirVoucher(self::client($confirmees))->getPourcentage(), "$confirmees réservations");
+        }
+    }
+
+    public function testPaliersDeRemise(): void
+    {
+        self::assertSame([10, 20, 30, 30, 30], array_map(VoucherManager::pourcentagePourRang(...), [1, 2, 3, 4, 10]));
     }
 
     public function testRetelechargerRenvoieLeMemeVoucherSansEnCreerUnAutre(): void

@@ -9,6 +9,9 @@
 .hotel-mini-card { background:var(--dark-card); border:1px solid var(--border-color); border-radius:8px; padding:1rem; transition:border-color .2s; cursor:pointer; }
 .hotel-mini-card:hover { border-color:var(--gold); }
 .hotel-mini-card img { width:60px; height:60px; object-fit:cover; border-radius:6px; }
+.gel-actif { background:rgba(74,144,217,.08); border:1px solid #4a90d9; color:#1f5f9e; border-radius:8px; padding:.8rem 1rem; }
+.prevision { border-top:1px solid var(--border-color); padding-top:1rem; }
+.ctx-label-mini { font-size:.72rem; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; font-weight:600; }
 {% endblock %}
 
 {% block body %}
@@ -66,6 +69,10 @@
             <h3 class="section-title mb-3">Description</h3>
             <p class="text-muted" style="line-height:1.8">{{ voyage.description }}</p>
 
+            <!-- Météo, affluence, jours fériés, événements -->
+            <h3 class="section-title mt-5 mb-3">Sur place du {{ voyage.dateDepart|date('d/m') }} au {{ voyage.dateRetour|date('d/m') }}</h3>
+            {{ include('voyage/_bloc_contexte.html.twig') }}
+
             <!-- Hôtels disponibles -->
             {% if hotels|length > 0 %}
             <h3 class="section-title mt-5 mb-3">Hôtels disponibles</h3>
@@ -107,6 +114,15 @@
                         </div>
                     </div>
 
+                    {% if gelActif %}
+                        <div class="gel-actif mb-3">
+                            <div class="fw-semibold"><i class="fas fa-snowflake me-1"></i>Prix gelé : {{ gelActif.prixGele|number_format(0, ',', ' ') }} € / pers.</div>
+                            <div class="small">Jusqu'au {{ gelActif.expireLe|date('d/m/Y à H:i') }} ({{ gelActif.joursRestants }} j restant{{ gelActif.joursRestants > 1 ? 's' }}).
+                                {% if gelActif.economieParPersonne > 0 %}<br><strong>Vous économisez {{ gelActif.economieParPersonne|number_format(0, ',', ' ') }} € / pers.</strong>{% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
                     {% if voyage.reservable %}
                         {% if is_granted('ROLE_CLIENT') %}
                             <a href="{{ path('reservation_nouvelle', {id: voyage.id}) }}" class="btn-gold w-100 text-center" style="display:block;padding:1rem;font-size:1rem">
@@ -120,6 +136,44 @@
                     {% else %}
                         <div class="text-center p-3 rounded" style="background:rgba(220,53,69,.08);border:1px solid #dc3545;color:#b02a37">
                             <i class="fas fa-ban me-2"></i>{{ voyage.motifNonReservable }}
+                        </div>
+                    {% endif %}
+
+                    {% if prevision %}
+                        {% set p = prevision %}
+                        {% set couleur = p.tendance == 'hausse' ? '#dc3545' : (p.tendance == 'baisse' ? '#198754' : '#6c757d') %}
+                        <div class="prevision mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="ctx-label-mini"><i class="fas fa-chart-line me-1 text-gold"></i>Prévision à 7 jours</span>
+                                <span class="fw-semibold" style="color:{{ couleur }}">
+                                    <i class="fas {{ p.tendance == 'hausse' ? 'fa-arrow-trend-up' : (p.tendance == 'baisse' ? 'fa-arrow-trend-down' : 'fa-arrows-left-right') }} me-1"></i>
+                                    {{ p.variation_pct > 0 ? '+' }}{{ p.variation_pct|number_format(1, ',') }} %
+                                </span>
+                            </div>
+                            <div class="small text-muted mt-1">≈ {{ p.prix_estime|number_format(0, ',', ' ') }} € · probabilité de hausse {{ p.probabilite_hausse }} %</div>
+                            <ul class="small text-muted ps-3 mt-2 mb-2">
+                                {% for f in p.facteurs %}<li>{{ f }}</li>{% endfor %}
+                            </ul>
+                            <div class="small" style="color:var(--gold-dark)"><i class="fas fa-lightbulb me-1"></i>{{ p.conseil }}</div>
+
+                            {% if not gelActif and is_granted('ROLE_CLIENT') and p.jours_avant_depart > 2 %}
+                                <button type="button" class="btn-outline-gold w-100 mt-3" data-bs-toggle="collapse" data-bs-target="#formGel" style="padding:.6rem">
+                                    <i class="fas fa-snowflake me-1"></i>Geler ce prix {{ dureeGel }} jours pour {{ fraisGel|number_format(0) }} €
+                                </button>
+                                <form id="formGel" class="collapse mt-3" method="post" action="{{ path('app_voyage_geler_prix', {id: voyage.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('geler-prix-' ~ voyage.id) }}">
+                                    <p class="small text-muted mb-2">Le prix de <strong>{{ voyage.prix|number_format(0, ',', ' ') }} € / pers.</strong> est garanti jusqu'au {{ ('now'|date_modify('+' ~ dureeGel ~ ' days'))|date('d/m/Y') }}. S'il monte, nous payons la différence ; s'il baisse, vous payez le prix le plus bas. Frais non remboursables, places non bloquées.</p>
+                                    <select name="methode" class="form-select form-select-sm mb-2">
+                                        {% for m in methodes|filter(m => m.value != 'especes') %}
+                                            <option value="{{ m.value }}">{{ m.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn-gold w-100" style="padding:.6rem"><i class="fas fa-lock me-1"></i>Payer {{ fraisGel|number_format(2, ',') }} € et geler</button>
+                                </form>
+                            {% elseif not is_granted('ROLE_CLIENT') %}
+                                <div class="small text-muted mt-2"><i class="fas fa-snowflake me-1"></i><a href="{{ path('app_login') }}">Connectez-vous</a> pour geler ce prix {{ dureeGel }} jours.</div>
+                            {% endif %}
+                            <div class="ctx-source mt-2" style="font-size:.68rem;color:#9aa0ac">Estimation selon le remplissage, le rythme des réservations et la date de départ.</div>
                         </div>
                     {% endif %}
 

@@ -8,6 +8,8 @@ use App\Entity\Voyage;
 use App\Enum\MethodePaiement;
 use App\Exception\ReservationException;
 use App\Form\ReservationFormType;
+use App\Repository\HotelRepository;
+use App\Service\Prix\GelPrixManager;
 use App\Service\ReservationManager;
 use App\Service\VoucherManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,7 +24,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class ReservationController extends AbstractController
 {
     #[Route('/nouvelle/{id}', name: 'reservation_nouvelle', requirements: ['id' => '\d+'])]
-    public function nouvelle(Voyage $voyage, Request $request, ReservationManager $reservationManager, VoucherManager $voucherManager): Response
+    public function nouvelle(Voyage $voyage, Request $request, ReservationManager $reservationManager, VoucherManager $voucherManager, HotelRepository $hotelRepository, GelPrixManager $gelPrixManager): Response
     {
         /** @var Client $client */
         $client = $this->getUser();
@@ -36,6 +38,14 @@ class ReservationController extends AbstractController
         $reservation = new Reservation();
         $reservation->setClient($client);
         $reservation->setVoyage($voyage);
+
+        // Hôtel présélectionné (lien du planificateur par ambiance), s'il est à la bonne destination.
+        if ($request->isMethod('GET') && ($hotelId = $request->query->getInt('hotel'))) {
+            $hotel = $hotelRepository->find($hotelId);
+            if ($hotel && $hotel->isActif() && $hotel->getDestination() === $voyage->getDestination()) {
+                $reservation->setHotel($hotel);
+            }
+        }
 
         $form = $this->createForm(ReservationFormType::class, $reservation, ['voyage' => $voyage]);
         $form->handleRequest($request);
@@ -55,6 +65,7 @@ class ReservationController extends AbstractController
             'form'              => $form, // objet Form : Symfony renvoie 422 si le formulaire est invalide
             'voyage'            => $voyage,
             'voucherDisponible' => $voucherManager->getVoucherDisponible($client),
+            'gelActif'          => $gelPrixManager->getGelActif($client, $voyage),
         ]);
     }
 

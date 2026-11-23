@@ -157,7 +157,10 @@ class OutilsCatalogue
     {
         $regles = [
             'seuil'       => sprintf('1 voucher gagné toutes les %d réservations confirmées (payées).', VoucherManager::SEUIL_RESERVATIONS),
-            'remise'      => sprintf('-%d %% sur le prix total de la réservation suivante.', VoucherManager::POURCENTAGE_REMISE),
+            'remise'      => sprintf(
+                'Remise progressive sur le prix total de la réservation suivante : -%d %% pour le 1er voucher (5e réservation), -%d %% pour le 2e (10e réservation), -%d %% à partir du 3e (15e réservation et suivantes).',
+                ...VoucherManager::PALIERS_REMISE
+            ),
             'obtention'   => 'Bouton "Télécharger voucher" dans Mon compte / Mes réservations, visible seulement une fois le seuil atteint.',
             'application' => 'Automatique à la prochaine réservation, rien à saisir. Si cette réservation est annulée, le voucher redevient disponible.',
         ];

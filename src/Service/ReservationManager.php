@@ -9,14 +9,15 @@ use App\Enum\MethodePaiement;
 use App\Enum\StatutPaiement;
 use App\Enum\StatutReservation;
 use App\Exception\ReservationException;
+use App\Repository\GelPrixRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Point d'entrée unique pour modifier une réservation.
  * Garantit que les places de l'avion restent cohérentes :
- *  - création   → décrémente les places du voyage, applique le voucher de fidélité
- *  - annulation → remet les places en vente, rend le voucher au client
+ *  - création   → décrémente les places du voyage, applique le voucher de fidélité et le gel de prix
+ *  - annulation → remet les places en vente, rend le voucher (et le gel de prix s'il n'a pas expiré) au client
  * La ligne du voyage est verrouillée (SELECT ... FOR UPDATE) pendant l'opération
  * pour que deux clients ne puissent pas réserver la dernière place en même temps.
  */
@@ -25,6 +26,7 @@ class ReservationManager
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly VoucherManager $voucherManager,
+        private readonly ?GelPrixRepository $gelPrixRepository = null,
     ) {
     }
 
@@ -42,6 +44,12 @@ class ReservationManager
 
             // Promotion automatique si le client a un voucher disponible.
             $this->voucherManager->appliquerAutomatiquement($reservation);
+
+            // Gel de prix actif du client sur ce voyage : prix le plus bas entre gelé et actuel.
+            if ($this->gelPrixRepository && $reservation->getClient()
+                && ($gel = $this->gelPrixRepository->findActif($reservation->getClient(), $voyage))) {
+                $reservation->appliquerGelPrix($gel);
+            }
 
             $reservation->setStatut(StatutReservation::EnAttente);
             $reservation->setPrixTotal(number_format($reservation->calculerPrixTotal(), 2, '.', ''));

@@ -220,6 +220,7 @@
             <div class="d-none d-lg-flex align-items-center gap-3" id="navMenu">
                 <a href="{{ path('app_home') }}"    class="nav-link-dt {% if app.request.get('_route') == 'app_home' %}active{% endif %}">Accueil</a>
                 <a href="{{ path('app_voyages') }}" class="nav-link-dt {% if app.request.get('_route') starts with 'app_voyage' %}active{% endif %}">Voyages</a>
+                <a href="{{ path('app_planificateur') }}" class="nav-link-dt {% if app.request.get('_route') == 'app_planificateur' %}active{% endif %}"><i class="fas fa-magic me-1"></i>Voyage sur mesure</a>
 
                 {% if app.user %}
                     {% if is_granted('ROLE_CLIENT') %}
@@ -247,6 +248,7 @@
             <div class="d-flex flex-column gap-2">
                 <a href="{{ path('app_home') }}"    class="nav-link-dt">Accueil</a>
                 <a href="{{ path('app_voyages') }}" class="nav-link-dt">Voyages</a>
+                <a href="{{ path('app_planificateur') }}" class="nav-link-dt">Voyage sur mesure</a>
                 {% if app.user %}
                     {% if is_granted('ROLE_CLIENT') %}
                         <a href="{{ path('profil_reservations') }}" class="nav-link-dt">Mes Réservations</a>

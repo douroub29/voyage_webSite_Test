@@ -1,0 +1,71 @@
+{# Fragment renvoyé par VoyageController::contexte (chargé en différé) : météo, affluence, jours fériés, événements. #}
+{% set m = contexte.meteo %}
+{% set a = contexte.affluence %}
+<div class="row g-3">
+    {# MÉTÉO HISTORIQUE #}
+    <div class="col-md-6">
+        <div class="ctx-card h-100">
+            <div class="ctx-label"><i class="fas fa-cloud-sun text-gold me-1"></i>Météo habituelle à ces dates</div>
+            {% if m %}
+                <div class="d-flex align-items-center gap-3 mt-2">
+                    <i class="fas {{ m.icone }} fa-2x text-gold"></i>
+                    <div>
+                        <div class="ctx-valeur">{{ m.temp_min|round }}° / {{ m.temp_max|round }}°C</div>
+                        <div class="small text-muted">{{ m.verdict }}</div>
+                    </div>
+                </div>
+                <div class="mt-3 small">
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">Probabilité de pluie (jour)</span><strong>{{ m.jours_pluie_pct }} %</strong></div>
+                    <div class="ctx-barre"><span style="width:{{ m.jours_pluie_pct }}%;background:#4a90d9"></span></div>
+                    <div class="d-flex justify-content-between mt-2"><span class="text-muted">Précipitations moyennes</span><strong>{{ m.pluie_mm_jour|number_format(1, ',') }} mm/jour</strong></div>
+                </div>
+                <div class="ctx-source">Moyenne des {{ m.annees }} dernières années aux mêmes dates · Open-Meteo</div>
+            {% else %}
+                <p class="small text-muted mt-2 mb-0">Données météo indisponibles pour cette destination.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# AFFLUENCE #}
+    <div class="col-md-6">
+        <div class="ctx-card h-100">
+            <div class="ctx-label"><i class="fas fa-users text-gold me-1"></i>Affluence touristique estimée</div>
+            {% set couleur = a.score >= 75 ? '#dc3545' : (a.score >= 50 ? '#e0a800' : '#198754') %}
+            <div class="ctx-valeur mt-2" style="color:{{ couleur }}">{{ a.niveau }}</div>
+            <div class="ctx-barre mt-2"><span style="width:{{ a.score }}%;background:{{ couleur }}"></span></div>
+            <div class="small text-muted mt-2">{{ a.explication }}</div>
+            <div class="ctx-source">Estimation selon la saison et les jours fériés locaux</div>
+        </div>
+    </div>
+
+    {# JOURS FÉRIÉS + ÉVÉNEMENTS #}
+    <div class="col-12">
+        <div class="ctx-card">
+            <div class="ctx-label"><i class="fas fa-calendar-day text-gold me-1"></i>Jours fériés et événements pendant votre séjour</div>
+            {% if contexte.feries is not empty %}
+                <ul class="list-unstyled small mt-2 mb-0">
+                    {% for f in contexte.feries %}
+                        <li class="mb-1"><span class="badge-ctx">{{ f.date|date('d/m') }}</span> {{ f.nom }} <span class="text-muted">— jour férié : certains commerces et sites peuvent être fermés</span></li>
+                    {% endfor %}
+                </ul>
+            {% elseif contexte.feries_disponibles %}
+                <p class="small text-muted mt-2 mb-0">Aucun jour férié pendant ces dates.</p>
+            {% else %}
+                <p class="small text-muted mt-2 mb-0">Jours fériés non disponibles pour ce pays.</p>
+            {% endif %}
+
+            {% if contexte.evenements is not empty %}
+                <ul class="list-unstyled small mt-3 mb-0">
+                    {% for e in contexte.evenements %}
+                        <li class="mb-2">
+                            <i class="fas fa-star text-gold me-1"></i><strong>{{ e.nom }}</strong>
+                            {% if e.periode %}<span class="text-muted">({{ e.periode }})</span>{% endif %}
+                            {% if e.impact %}<div class="text-muted ms-3">{{ e.impact }}</div>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="ctx-source"><i class="fas fa-magic me-1"></i>Événements suggérés par l'IA : dates à confirmer auprès de l'office de tourisme</div>
+            {% endif %}
+        </div>
+    </div>
+</div>

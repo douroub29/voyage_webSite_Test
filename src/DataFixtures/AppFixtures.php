@@ -40,15 +40,16 @@ class AppFixtures extends Fixture
         // ── DESTINATIONS ───────────────────────────────────────────────
         $destinations = [];
         foreach ([
-            ['Paris',      'France',   'La ville lumière, capitale de l\'amour et de la gastronomie. De la Tour Eiffel aux Champs-Élysées, Paris enchante tous ses visiteurs.'],
-            ['Marrakech',  'Maroc',    'La ville rouge, aux mille et une couleurs et saveurs. Souks, riads et palmeraies vous attendent dans cette cité magique.'],
-            ['Bali',       'Indonésie','L\'île des dieux, paradis tropical de sérénité. Rizières en terrasses, temples hindous et plages de sable volcanique.'],
-            ['New York',   'États-Unis','La grande pomme, ville qui ne dort jamais. Manhattan, Central Park et la Statue de la Liberté vous accueillent.'],
-            ['Dubaï',      'Émirats arabes','La ville du futur, luxe et architecture époustouflante. Le Burj Khalifa et les souks dorés définissent cette métropole unique.'],
-            ['Rome',       'Italie',   'La ville éternelle, berceau de la civilisation occidentale. Le Colisée, la Fontaine de Trevi et la gastronomie italienne vous attendent.'],
-        ] as [$nom, $pays, $desc]) {
+            ['Paris',      'France',   'La ville lumière, capitale de l\'amour et de la gastronomie. De la Tour Eiffel aux Champs-Élysées, Paris enchante tous ses visiteurs.', 48.8566, 2.3522, 'FR', 2.5],
+            ['Marrakech',  'Maroc',    'La ville rouge, aux mille et une couleurs et saveurs. Souks, riads et palmeraies vous attendent dans cette cité magique.', 31.6295, -7.9811, 'MA', 2.5],
+            ['Bali',       'Indonésie','L\'île des dieux, paradis tropical de sérénité. Rizières en terrasses, temples hindous et plages de sable volcanique.', -8.4095, 115.1889, 'ID', 17.0],
+            ['New York',   'États-Unis','La grande pomme, ville qui ne dort jamais. Manhattan, Central Park et la Statue de la Liberté vous accueillent.', 40.7128, -74.0060, 'US', 11.0],
+            ['Dubaï',      'Émirats arabes','La ville du futur, luxe et architecture époustouflante. Le Burj Khalifa et les souks dorés définissent cette métropole unique.', 25.2048, 55.2708, 'AE', 6.0],
+            ['Rome',       'Italie',   'La ville éternelle, berceau de la civilisation occidentale. Le Colisée, la Fontaine de Trevi et la gastronomie italienne vous attendent.', 41.9028, 12.4964, 'IT', 1.3],
+        ] as [$nom, $pays, $desc, $lat, $lon, $codePays, $vol]) {
             $dest = new Destination();
-            $dest->setNom($nom)->setPays($pays)->setDescription($desc);
+            $dest->setNom($nom)->setPays($pays)->setDescription($desc)
+                 ->setLatitude($lat)->setLongitude($lon)->setCodePays($codePays)->setDureeVolHeures($vol);
             $manager->persist($dest);
             $destinations[] = $dest;
         }

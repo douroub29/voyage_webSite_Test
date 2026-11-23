@@ -1,0 +1,248 @@
+{% extends 'base.html.twig' %}
+{% block title %}Planificateur par ambiance{% endblock %}
+
+{% block extra_styles %}
+.vibe-hero { background:linear-gradient(135deg,#1d2a44,#3a4a6b); color:#fff; padding:4rem 0 3rem; }
+.vibe-hero h1 { font-family:'Playfair Display',serif; color:#fff; font-size:2.4rem; }
+.vibe-box { background:#fff; border-radius:14px; padding:1.25rem; box-shadow:0 10px 30px rgba(0,0,0,.15); }
+.vibe-box textarea { border:none; resize:none; font-size:1.05rem; width:100%; outline:none; color:var(--text-light); }
+.vibe-exemple { display:inline-block; background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:20px; padding:.3rem .8rem; font-size:.8rem; margin:.25rem .25rem 0 0; cursor:pointer; }
+.vibe-exemple:hover { background:rgba(255,255,255,.25); }
+.plan-card { background:var(--dark-card); border:1px solid var(--border-color); border-radius:12px; overflow:hidden; }
+.plan-score { font-family:'Playfair Display',serif; font-size:2rem; color:var(--gold); line-height:1; }
+.compromis { background:rgba(224,168,0,.08); border-left:3px solid #e0a800; padding:.6rem .9rem; border-radius:4px; font-size:.88rem; }
+.jour { background:var(--dark-card); border:1px solid var(--border-color); border-radius:10px; padding:1rem; }
+.jour-titre { font-weight:600; color:var(--text-light); border:none; background:transparent; width:100%; padding:0; outline:none; }
+.jour-titre:focus { border-bottom:1px dashed var(--gold); }
+.activites { list-style:none; padding:0; margin:.6rem 0 0; min-height:2.2rem; border-radius:6px; transition:background .15s; }
+.activites.survol { background:var(--gold-soft); outline:2px dashed var(--gold); }
+.activite { display:flex; align-items:center; gap:.5rem; background:#fff; border:1px solid var(--border-color); border-radius:6px; padding:.45rem .6rem; margin-bottom:.4rem; font-size:.88rem; cursor:grab; }
+.activite.glisse { opacity:.4; }
+.activite .poignee { color:#b5bac5; }
+.activite .texte { flex:1; outline:none; }
+.activite .suppr { border:none; background:none; color:#b5bac5; padding:0 .2rem; }
+.activite .suppr:hover { color:#dc3545; }
+.ajout { border:none; background:none; color:var(--gold-dark); font-size:.8rem; padding:.2rem 0; }
+{% endblock %}
+
+{% block body %}
+<section class="vibe-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="small text-uppercase mb-2" style="letter-spacing:2px;color:var(--gold-light)"><i class="fas fa-magic me-1"></i>Planificateur par ambiance</div>
+                <h1 class="mb-3">Décrivez le voyage dont vous rêvez</h1>
+                <p style="color:rgba(255,255,255,.8)">Ambiance, période, budget, durée de vol… Nous assemblons le vol, l'hôtel et un programme jour par jour que vous pourrez réorganiser librement.</p>
+                <form method="post" action="{{ path('app_planificateur') }}" class="vibe-box mt-4" id="formVibe">
+                    <input type="hidden" name="_token" value="{{ csrf_token('planificateur') }}">
+                    <textarea name="envie" id="envie" rows="3" maxlength="500" required placeholder="Ex. : Je veux un endroit calme au bord de la mer en octobre, avec de la bonne gastronomie, à moins de 3h de vol et un budget de 800 €">{{ envie }}</textarea>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="small text-muted"><span id="compteur">{{ envie|length }}</span>/500</span>
+                        <button type="submit" class="btn-gold" id="btnVibe"><i class="fas fa-wand-magic-sparkles me-2"></i>Composer mon voyage</button>
+                    </div>
+                </form>
+                <div class="mt-3">
+                    {% for ex in exemples %}<span class="vibe-exemple" data-exemple="{{ ex }}">{{ ex|length > 55 ? ex|slice(0, 55) ~ '…' : ex }}</span>{% endfor %}
+                </div>
+                {% if erreur %}
+                    <div class="alert alert-warning mt-3 mb-0">{{ erreur }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if plan %}
+{% set v = plan.voyage %}
+<section class="container py-5" id="resultat">
+    <div class="row g-4">
+        {# ── PROPOSITION ─────────────────────────────── #}
+        <div class="col-lg-4">
+            <div class="plan-card sticky-top" style="top:100px">
+                <a href="{{ path('app_voyage_show', {id: v.id}) }}" style="display:block;height:180px;overflow:hidden">
+                    {% if v.photoUrl %}<img src="{{ v.photoUrl }}" alt="{{ v.titre }}" style="width:100%;height:100%;object-fit:cover">{% endif %}
+                </a>
+                <div class="p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted"><i class="fas fa-map-marker-alt text-gold me-1"></i>{{ v.destination.nom }}, {{ v.destination.pays }}</div>
+                            <h5 class="mt-1 mb-0" style="font-family:'Playfair Display',serif">{{ v.titre }}</h5>
+                        </div>
+                        <div class="text-end ms-2">
+                            <div class="plan-score">{{ plan.correspondance }}%</div>
+                            <div class="text-muted" style="font-size:.65rem;text-transform:uppercase">correspondance</div>
+                        </div>
+                    </div>
+
+                    <p class="small mt-3 mb-2" style="color:var(--gold-dark)"><i class="fas {{ plan.ia ? 'fa-magic' : 'fa-lightbulb' }} me-1"></i>{{ plan.pourquoi }}</p>
+                    {% if plan.compromis %}<div class="compromis mb-3"><i class="fas fa-exclamation-triangle me-1" style="color:#e0a800"></i>{{ plan.compromis }}</div>{% endif %}
+
+                    <ul class="list-unstyled small mb-3">
+                        <li class="mb-2"><i class="fas fa-plane text-gold me-2"></i>{{ v.compagnieAerienne ? v.compagnieAerienne.label : 'Vol' }}{{ v.numeroVol ? ' · ' ~ v.numeroVol }}{% if v.destination.dureeVolHeures %} · ~{{ v.destination.dureeVolHeures|number_format(1, ',') }} h depuis Tunis{% endif %}</li>
+                        <li class="mb-2"><i class="fas fa-calendar text-gold me-2"></i>{{ v.dateDepart|date('d/m/Y') }} → {{ v.dateRetour|date('d/m/Y') }} ({{ v.dureeJours }} nuits)</li>
+                        <li class="mb-2"><i class="fas fa-hotel text-gold me-2"></i>
+                            {% if plan.hotel %}<a href="{{ path('app_hotel_show', {id: plan.hotel.id}) }}">{{ plan.hotel.nom }}</a> {{ plan.hotel.etoiles }}★ · {{ plan.hotel.prixParNuit|number_format(0, ',', ' ') }} €/nuit{% else %}Sans hôtel (à choisir à la réservation){% endif %}
+                        </li>
+                    </ul>
+                    <div class="d-flex justify-content-between align-items-baseline border-top pt-3">
+                        <span class="text-muted small">Budget estimé / pers.</span>
+                        <span class="text-gold fw-bold" style="font-size:1.4rem">{{ plan.budget_par_personne|number_format(0, ',', ' ') }} €</span>
+                    </div>
+                    <div class="text-muted" style="font-size:.7rem">Vol et séjour {{ v.prix|number_format(0, ',', ' ') }} €{% if plan.hotel %} + hôtel {{ plan.hotel.prixParNuit|number_format(0, ',', ' ') }} € × {{ v.dureeJours }} nuits{% endif %}</div>
+
+                    {% if is_granted('ROLE_CLIENT') %}
+                        <a href="{{ path('reservation_nouvelle', {id: v.id, hotel: plan.hotel ? plan.hotel.id : null}) }}" class="btn-gold w-100 text-center mt-3" style="display:block;padding:.8rem"><i class="fas fa-calendar-plus me-2"></i>Réserver ce voyage</a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="btn-gold w-100 text-center mt-3" style="display:block;padding:.8rem"><i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour réserver</a>
+                    {% endif %}
+                    <a href="{{ path('app_voyage_show', {id: v.id}) }}" class="btn-outline-gold w-100 text-center mt-2" style="display:block;padding:.6rem">Voir le détail et le prix</a>
+
+                    {% if plan.alternatives is not empty %}
+                        <div class="mt-4 small">
+                            <div class="ctx-label mb-2" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:#6c757d;font-weight:600">Autres idées</div>
+                            {% for alt in plan.alternatives %}
+                                <div class="mb-2"><a href="{{ path('app_voyage_show', {id: alt.voyage.id}) }}" class="fw-semibold">{{ alt.voyage.titre }}</a>
+                                    <span class="text-muted">· {{ alt.voyage.prix|number_format(0, ',', ' ') }} €</span><br><span class="text-muted">{{ alt.raison }}</span></div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# ── PROGRAMME MODIFIABLE ─────────────────────── #}
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+                <div>
+                    <h3 class="section-title mb-1">Votre programme jour par jour</h3>
+                    <p class="text-muted small mb-0"><i class="fas fa-hand-pointer me-1"></i>Glissez-déposez les activités pour les réorganiser, cliquez sur un texte pour le modifier. Vos modifications sont enregistrées sur cet appareil.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReset"><i class="fas fa-undo me-1"></i>Réinitialiser</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fas fa-print me-1"></i>Imprimer</button>
+                </div>
+            </div>
+
+            <div id="programme" class="row g-3" data-cle="dt-programme-{{ v.id }}"></div>
+            <script type="application/json" id="programmeInitial">{{ plan.programme|json_encode|raw }}</script>
+
+            <h3 class="section-title mt-5 mb-3">Sur place du {{ v.dateDepart|date('d/m') }} au {{ v.dateRetour|date('d/m') }}</h3>
+            {{ include('voyage/_bloc_contexte.html.twig', {voyage: v}) }}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<script>
+(function () {
+    const envie = document.getElementById('envie');
+    const compteur = document.getElementById('compteur');
+    envie.addEventListener('input', () => { compteur.textContent = envie.value.length; });
+    document.querySelectorAll('.vibe-exemple').forEach((el) => el.addEventListener('click', () => {
+        envie.value = el.dataset.exemple; compteur.textContent = envie.value.length; envie.focus();
+    }));
+    document.getElementById('formVibe').addEventListener('submit', () => {
+        const b = document.getElementById('btnVibe');
+        b.disabled = true;
+        b.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Composition en cours…';
+    });
+
+    const zone = document.getElementById('programme');
+    if (!zone) return;
+    document.getElementById('resultat').scrollIntoView({ behavior: 'smooth' });
+
+    const initial = JSON.parse(document.getElementById('programmeInitial').textContent);
+    // Une clé par programme généré : un nouveau plan ne reprend pas les modifications d'un autre.
+    const brut = JSON.stringify(initial);
+    let h = 0; for (let i = 0; i < brut.length; i++) { h = (h * 31 + brut.charCodeAt(i)) | 0; }
+    const cle = zone.dataset.cle + '-' + (h >>> 0).toString(36);
+    let programme;
+    try { programme = JSON.parse(localStorage.getItem(cle)) || structuredClone(initial); } catch (e) { programme = structuredClone(initial); }
+
+    const sauver = () => { try { localStorage.setItem(cle, JSON.stringify(programme)); } catch (e) {} };
+    const echapper = (t) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let glisse = null; // {jour, index}
+
+    function rendre() {
+        zone.innerHTML = programme.map((j, ji) => `
+            <div class="col-md-6">
+                <div class="jour">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge-ctx" style="background:var(--gold-soft);color:var(--gold-dark);border-radius:4px;padding:.1rem .45rem;font-weight:600;font-size:.75rem">J${ji + 1}</span>
+                        <input class="jour-titre" data-jour="${ji}" value="${echapper(j.titre)}" maxlength="80" aria-label="Titre du jour ${ji + 1}">
+                    </div>
+                    <ul class="activites" data-jour="${ji}">
+                        ${j.activites.map((a, ai) => `
+                            <li class="activite" draggable="true" data-jour="${ji}" data-index="${ai}">
+                                <i class="fas fa-grip-vertical poignee"></i>
+                                <span class="texte" contenteditable="true" data-jour="${ji}" data-index="${ai}">${echapper(a)}</span>
+                                <button type="button" class="suppr" data-jour="${ji}" data-index="${ai}" title="Supprimer"><i class="fas fa-times"></i></button>
+                            </li>`).join('')}
+                    </ul>
+                    <button type="button" class="ajout" data-jour="${ji}"><i class="fas fa-plus me-1"></i>Ajouter une activité</button>
+                </div>
+            </div>`).join('');
+    }
+
+    zone.addEventListener('dragstart', (e) => {
+        const li = e.target.closest('.activite');
+        if (!li) return;
+        glisse = { jour: +li.dataset.jour, index: +li.dataset.index };
+        li.classList.add('glisse');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+    });
+    zone.addEventListener('dragend', () => { glisse = null; zone.querySelectorAll('.glisse, .survol').forEach((el) => el.classList.remove('glisse', 'survol')); });
+    zone.addEventListener('dragover', (e) => {
+        const liste = e.target.closest('.activites');
+        if (!liste || !glisse) return;
+        e.preventDefault();
+        zone.querySelectorAll('.survol').forEach((el) => el !== liste && el.classList.remove('survol'));
+        liste.classList.add('survol');
+    });
+    zone.addEventListener('drop', (e) => {
+        const liste = e.target.closest('.activites');
+        if (!liste || !glisse) return;
+        e.preventDefault();
+        const cible = +liste.dataset.jour;
+        // Position d'insertion : avant l'activité survolée, sinon en fin de liste.
+        const avant = e.target.closest('.activite');
+        let index = avant ? +avant.dataset.index : programme[cible].activites.length;
+        const [element] = programme[glisse.jour].activites.splice(glisse.index, 1);
+        if (glisse.jour === cible && glisse.index < index) index--;
+        programme[cible].activites.splice(index, 0, element);
+        glisse = null;
+        sauver(); rendre();
+    });
+
+    zone.addEventListener('input', (e) => {
+        if (e.target.classList.contains('jour-titre')) {
+            programme[+e.target.dataset.jour].titre = e.target.value; sauver();
+        } else if (e.target.classList.contains('texte')) {
+            programme[+e.target.dataset.jour].activites[+e.target.dataset.index] = e.target.textContent.trim(); sauver();
+        }
+    });
+    zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList.contains('texte')) { e.preventDefault(); e.target.blur(); } });
+    zone.addEventListener('click', (e) => {
+        const suppr = e.target.closest('.suppr');
+        const ajout = e.target.closest('.ajout');
+        if (suppr) {
+            programme[+suppr.dataset.jour].activites.splice(+suppr.dataset.index, 1);
+            sauver(); rendre();
+        } else if (ajout) {
+            const j = +ajout.dataset.jour;
+            programme[j].activites.push('Nouvelle activité');
+            sauver(); rendre();
+            const champs = zone.querySelectorAll(`.texte[data-jour="${j}"]`);
+            const dernier = champs[champs.length - 1];
+            dernier.focus(); document.getSelection().selectAllChildren(dernier);
+        }
+    });
+    document.getElementById('btnReset').addEventListener('click', () => {
+        programme = structuredClone(initial); localStorage.removeItem(cle); rendre();
+    });
+
+    rendre();
+})();
+</script>
+{% endblock %}

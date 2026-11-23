@@ -67,6 +67,11 @@ class Reservation
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Voucher $voucher = null;
 
+    /** Gel de prix utilisé : le prix par personne payé est le plus bas entre prix gelé et prix actuel. */
+    #[ORM\OneToOne(targetEntity: GelPrix::class, inversedBy: 'reservation')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?GelPrix $gelPrix = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -134,11 +139,34 @@ class Reservation
         return $this;
     }
 
-    /** Annule la réservation ; un voucher utilisé redevient disponible pour le client. */
+    public function getGelPrix(): ?GelPrix { return $this->gelPrix; }
+
+    public function appliquerGelPrix(?GelPrix $gel): static
+    {
+        $this->gelPrix?->setReservation(null);
+        $this->gelPrix = $gel;
+        $gel?->setReservation($this);
+        return $this;
+    }
+
+    /** Prix par personne du voyage, gel de prix pris en compte. */
+    public function getPrixUnitaireVoyage(): float
+    {
+        return $this->gelPrix ? $this->gelPrix->prixApplicable() : (float) $this->voyage->getPrix();
+    }
+
+    /** Économie totale grâce au gel de prix (0 si le prix n'a pas monté). */
+    public function getEconomieGelPrix(): float
+    {
+        return $this->gelPrix ? round($this->gelPrix->getEconomieParPersonne() * $this->nombrePersonnes, 2) : 0.0;
+    }
+
+    /** Annule la réservation ; un voucher ou un gel de prix utilisé redevient disponible pour le client. */
     public function annuler(): void
     {
         $this->statut = StatutReservation::Annulee;
         $this->appliquerVoucher(null);
+        $this->appliquerGelPrix(null);
     }
 
     /** Montant de la remise du voucher (0 sans voucher). */
@@ -159,7 +187,7 @@ class Reservation
     /** Prix avant remise : voyage + hôtel + transfert. */
     public function calculerPrixBrut(): float
     {
-        $prix = (float) $this->voyage->getPrix() * $this->nombrePersonnes;
+        $prix = $this->getPrixUnitaireVoyage() * $this->nombrePersonnes;
 
         if ($this->hotel && $this->nombreNuits) {
             $prix += (float) $this->hotel->getPrixParNuit() * $this->nombreNuits;
