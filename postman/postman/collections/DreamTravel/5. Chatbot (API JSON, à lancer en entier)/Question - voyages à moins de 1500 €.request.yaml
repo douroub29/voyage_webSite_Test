@@ -1,0 +1,17 @@
+$kind: http-request
+name: "Question : voyages à moins de 1500 €"
+url: "{{baseUrl}}/assistant/message"
+method: POST
+headers:
+  Content-Type: application/json
+  X-CSRF-Token: "{{assistantCsrf}}"
+body:
+  type: text
+  content: '{"message": "Quels voyages pour moins de 1500 € ?"}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 + réponse texte', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().reponse).to.be.a('string').and.not.empty; });
+      console.log('Réponse du chatbot :', pm.response.json().reponse);
+    language: text/javascript
+order: 2000

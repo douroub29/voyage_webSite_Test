@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/assistant/message"
+method: POST
+headers:
+  Content-Type: application/json
+  X-CSRF-Token: "{{assistantCsrf}}"
+body:
+  type: text
+  content: '{"message": "{{questionLongue}}"}'
+scripts:
+  - type: beforeRequest
+    code: pm.collectionVariables.set('questionLongue', 'a'.repeat(501));
+    language: text/javascript
+  - type: afterResponse
+    code: pm.test('422 + limite indiquée', () => { pm.response.to.have.status(422); pm.expect(pm.response.json().erreur).to.include('500'); });
+    language: text/javascript
+order: 5000

@@ -1,0 +1,24 @@
+$kind: collection
+description: |-
+  Tests manuels et automatiques de DreamTravel.
+
+  1. Démarrez le site (http://127.0.0.1:8000) avec les données de démonstration (fixtures).
+  2. Importez cette collection dans Postman, puis « Run collection » pour tout exécuter dans l'ordre.
+
+  Les dossiers « Parcours client », « Parcours admin » et « Chatbot » enchaînent leurs requêtes (jetons CSRF et cookie de session récupérés automatiquement) : lancez-les en entier, dans l'ordre.
+
+  Comptes de démonstration : sophie@example.com / Client@1234, admin@dreamtravel.com / Admin@1234.
+variables:
+  baseUrl: http://127.0.0.1:8000
+  clientEmail: sophie@example.com
+  clientPassword: Client@1234
+  adminEmail: admin@dreamtravel.com
+  adminPassword: Admin@1234
+  voyageId: "1"
+  loginCsrf: ""
+  assistantCsrf: ""
+  questionLongue: ""
+scripts:
+  - type: http:afterResponse
+    code: pm.test('Temps de réponse < 5 s', () => pm.expect(pm.response.responseTime).to.be.below(5000));
+    language: text/javascript

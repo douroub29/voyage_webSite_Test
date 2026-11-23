@@ -1,0 +1,11 @@
+$kind: http-request
+name: Espace client sans connexion → /connexion
+url: "{{baseUrl}}/mon-compte"
+method: GET
+scripts:
+  - type: afterResponse
+    code: pm.test('Redirection vers la connexion', () => { pm.response.to.have.status(302); pm.expect(pm.response.headers.get('Location')).to.include('/connexion'); });
+    language: text/javascript
+settings:
+  followRedirects: false
+order: 3000

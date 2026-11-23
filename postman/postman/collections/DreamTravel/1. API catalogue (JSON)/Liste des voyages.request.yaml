@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 + JSON', () => { pm.response.to.have.status(200); pm.response.to.be.json; });
+      const d = pm.response.json();
+      pm.test('total = nombre de voyages renvoyés', () => pm.expect(d.total).to.eql(d.voyages.length));
+      pm.test('Au moins un voyage', () => pm.expect(d.total).to.be.above(0));
+      pm.test('Champs attendus', () => d.voyages.forEach(v => pm.expect(v).to.include.all.keys('id','titre','destination','societe','dateDepart','dateRetour','dureeNuits','prixParPersonne','placesRestantes','reservable','photo','url')));
+      pm.test('Voyages proposés : départ à venir', () => { const today = new Date().toISOString().slice(0,10); d.voyages.forEach(v => pm.expect(v.dateDepart > today).to.be.true); });
+      pm.collectionVariables.set('voyageId', d.voyages[0].id);
+    language: text/javascript
+order: 1000

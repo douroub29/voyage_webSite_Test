@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages?societe=atlas"
+method: GET
+queryParams:
+  societe: atlas
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      const d = pm.response.json();
+      pm.test('Uniquement des voyages Atlas Voyages', () => { pm.expect(d.total).to.be.above(0); d.voyages.forEach(v => pm.expect(v.societe).to.eql('Atlas Voyages')); });
+      pm.test('Filtre rappelé dans la réponse', () => pm.expect(d.filtres.societe).to.eql('atlas'));
+    language: text/javascript
+order: 2000

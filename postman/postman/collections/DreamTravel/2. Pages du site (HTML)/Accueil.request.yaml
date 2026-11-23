@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      const html = pm.response.text();
+      pm.test('« Voyages à la Une » avec photos', () => { pm.expect(html).to.include('Voyages à la Une'); pm.expect(html).to.include('/uploads/voyages/'); });
+      pm.test('« Nos Destinations » supprimé', () => pm.expect(html).to.not.include('Nos Destinations'));
+      pm.test('Widget chatbot présent', () => pm.expect(html).to.include('assistant-panneau'));
+    language: text/javascript
+order: 1000

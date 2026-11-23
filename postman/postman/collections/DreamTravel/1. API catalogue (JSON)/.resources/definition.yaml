@@ -1,0 +1,3 @@
+$kind: collection
+description: "API publique en lecture seule : /api/voyages, /api/voyages/{id}, /api/societes."
+order: 1000

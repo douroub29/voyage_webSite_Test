@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/deconnexion"
+method: GET
+settings:
+  followRedirects: false
+order: 4000

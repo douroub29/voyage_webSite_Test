@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/mon-compte/recommandations"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      pm.test('Voyages recommandés avec raison', () => pm.expect(pm.response.text()).to.match(/card-dt|Aucune recommandation/));
+    language: text/javascript
+order: 5000

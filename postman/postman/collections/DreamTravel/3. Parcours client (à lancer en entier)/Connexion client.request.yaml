@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/connexion"
+method: POST
+headers:
+  Origin: "{{baseUrl}}"
+body:
+  type: urlencoded
+  content:
+    email: "{{clientEmail}}"
+    password: "{{clientPassword}}"
+    _csrf_token: "{{loginCsrf}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Connecté (302)', () => pm.response.to.have.status(302));
+      pm.test('Pas envoyé vers /connexion (mot de passe correct)', () => pm.expect(pm.response.headers.get('Location')).to.not.include('/connexion'));
+      pm.test('Un client ne va pas sur /admin', () => pm.expect(pm.response.headers.get('Location')).to.not.include('/admin'));
+    language: text/javascript
+settings:
+  followRedirects: false
+order: 2000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/assistant/message"
+method: POST
+headers:
+  Content-Type: application/json
+  X-CSRF-Token: jeton-invalide
+body:
+  type: text
+  content: '{"message": "Bonjour"}'
+scripts:
+  - type: afterResponse
+    code: pm.test('403 + message', () => { pm.response.to.have.status(403); pm.expect(pm.response.json().erreur).to.be.a('string'); });
+    language: text/javascript
+order: 3000

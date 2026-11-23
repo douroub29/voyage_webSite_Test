@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/mon-compte"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      pm.test('Page compte + bloc fidélité', () => { pm.expect(pm.response.text()).to.include('Mon compte'); pm.expect(pm.response.text()).to.include('Voucher fidélité'); });
+    language: text/javascript
+order: 3000

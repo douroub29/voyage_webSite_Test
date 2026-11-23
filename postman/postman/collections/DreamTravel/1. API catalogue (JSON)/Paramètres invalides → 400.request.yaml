@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages?budget=abc&date_depart=31/12/2026&personnes=0"
+method: GET
+queryParams:
+  budget: abc
+  date_depart: 31/12/2026
+  personnes: "0"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400', () => pm.response.to.have.status(400));
+      pm.test('Détail des erreurs par paramètre', () => pm.expect(pm.response.json().details).to.have.all.keys('budget','date_depart','personnes'));
+    language: text/javascript
+order: 5000

@@ -1,0 +1,3 @@
+$kind: collection
+description: Nécessite GEMINI_API_KEY dans .env.local pour de vraies réponses ; sinon l'assistant répond qu'il n'est pas activé.
+order: 5000

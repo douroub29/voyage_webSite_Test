@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages?destination=Japon"
+method: GET
+queryParams:
+  destination: Japon
+scripts:
+  - type: afterResponse
+    code: pm.test('Aucun voyage inventé', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().total).to.eql(0); });
+    language: text/javascript
+order: 4000

@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/connexion"
+method: POST
+headers:
+  Origin: "{{baseUrl}}"
+body:
+  type: urlencoded
+  content:
+    email: "{{adminEmail}}"
+    password: "{{adminPassword}}"
+    _csrf_token: "{{loginCsrf}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Redirigé directement vers /admin', () => { pm.response.to.have.status(302); pm.expect(pm.response.headers.get('Location')).to.match(/\/admin$/); });
+    language: text/javascript
+settings:
+  followRedirects: false
+order: 2000

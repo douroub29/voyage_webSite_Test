@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages/{{voyageId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      const v = pm.response.json();
+      pm.test('Bon voyage', () => pm.expect(String(v.id)).to.eql(String(pm.collectionVariables.get('voyageId'))));
+      pm.test('Détails complets', () => pm.expect(v).to.include.all.keys('description','compagnieAerienne','numeroVol','motifNonReservable','hotels'));
+      pm.test('Hôtels avec prix par nuit', () => v.hotels.forEach(h => pm.expect(h.prixParNuit).to.be.a('number')));
+    language: text/javascript
+order: 6000

@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages/999999"
+method: GET
+scripts:
+  - type: afterResponse
+    code: pm.test('404 en JSON', () => { pm.response.to.have.status(404); pm.response.to.be.json; pm.expect(pm.response.json().erreur).to.include('introuvable'); });
+    language: text/javascript
+order: 7000

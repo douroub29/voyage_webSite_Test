@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/voyages"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: pm.test('405 en JSON', () => { pm.response.to.have.status(405); pm.expect(pm.response.json().statut).to.eql(405); });
+    language: text/javascript
+order: 8000

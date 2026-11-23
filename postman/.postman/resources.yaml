@@ -1,0 +1,12 @@
+# Use this workspace to collaborate
+workspace:
+  id: 89e00fbc-21bb-4936-81a5-6cf1385a771a
+
+localResources:
+  collections: []
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/DreamTravel: 214fbb15-cb5f-4a40-81f3-7e019432ddfd

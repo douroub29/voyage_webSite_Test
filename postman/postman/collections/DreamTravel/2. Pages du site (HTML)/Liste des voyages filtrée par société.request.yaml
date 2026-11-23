@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/voyages?societe=atlas"
+method: GET
+queryParams:
+  societe: atlas
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      const html = pm.response.text();
+      pm.test('Boutons « Voir le détail »', () => pm.expect(html).to.include('Voir le détail'));
+      pm.test('Voyages Atlas uniquement', () => { pm.expect(html).to.include('Marrakech'); pm.expect(html).to.not.include('Week-end Romantique'); });
+    language: text/javascript
+order: 2000

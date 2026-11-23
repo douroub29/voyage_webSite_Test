@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/societes"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.response.to.have.status(200);
+      const d = pm.response.json();
+      pm.test('total = nombre de sociétés', () => pm.expect(d.total).to.eql(d.societes.length));
+      pm.test('Nom + nombre de voyages', () => d.societes.forEach(s => { pm.expect(s.nom).to.be.a('string'); pm.expect(s.voyagesProposes).to.be.a('number'); }));
+    language: text/javascript
+order: 9000
