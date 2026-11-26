@@ -1,0 +1,16 @@
+.git
+.github
+.vscode
+.phpunit.cache
+docs
+postman
+var
+vendor
+public/assets
+public/bundles
+.env.local
+.env.*.local
+.env.local.php
+compose*.yaml
+Dockerfile
+.dockerignore

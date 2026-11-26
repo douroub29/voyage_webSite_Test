@@ -1,25 +1,42 @@
-
+# DreamTravel - configuration Docker de base (production)
+# Production : docker compose -f compose.yaml up -d --build
+# Développement : docker compose up -d --build   (compose.override.yaml est chargé automatiquement)
 services:
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-16}-alpine
+  app:
+    build:
+      context: .
+      target: prod
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      # Secrets locaux (GEMINI_API_KEY, MAILER_DSN...), jamais copiés dans l'image
+      - path: .env.local
+        required: false
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-    healthcheck:
-      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      APP_SECRET: ${APP_SECRET:-ChangeMeDreamTravelSecret}
+      DATABASE_URL: mysql://root:${MARIADB_ROOT_PASSWORD:-root}@database:3306/dreamtravels?serverVersion=10.4.32-MariaDB&charset=utf8mb4
+      DEFAULT_URI: http://localhost:${APP_PORT:-8088}
+    ports:
+      - "${APP_PORT:-8088}:80"
     volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - uploads:/var/www/html/public/uploads
+    restart: unless-stopped
+
+  database:
+    image: mariadb:10.4
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    volumes:
+      - database_data:/var/lib/mysql
+    restart: unless-stopped
 
 volumes:
-###> doctrine/doctrine-bundle ###
   database_data:
-###< doctrine/doctrine-bundle ###
+  uploads:
