@@ -1,5 +1,5 @@
 # CI/CD DreamTravel
-# - CI : à chaque push et pull request -> qualité du code + tests unitaires, d'intégration et fonctionnels
+# - CI : à chaque push et pull request -> qualité du code + tests unitaires, d'intégration, fonctionnels et E2E (navigateur)
 # - CD : sur la branche par défaut, si tout est vert -> construction d'un livrable de production téléchargeable
 name: CI/CD
 
@@ -119,10 +119,61 @@ jobs:
           path: var/junit-*.xml
           if-no-files-found: ignore
 
+  e2e:
+    name: Tests E2E (navigateur, Docker)
+    runs-on: ubuntu-latest
+    needs: qualite
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Démarrage de la stack Docker (app, MariaDB, Mailpit)
+        run: docker compose up -d --build
+
+      - name: Attente de l'application (migrations + fixtures)
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf -o /dev/null http://localhost:8088/; then echo "Application prête"; exit 0; fi
+            sleep 5
+          done
+          echo "L'application ne répond pas" >&2
+          docker compose logs app
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Installation de Playwright et Chromium
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Tests E2E
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Rapport Playwright (captures, vidéos, traces)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-e2e
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 14
+
+      - name: Logs Docker en cas d'échec
+        if: failure()
+        run: docker compose logs --no-color
+
   livrable:
     name: Livrable de production (CD)
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [tests, e2e]
     # Uniquement sur la branche par défaut du dépôt (main ou master)
     if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
     env:

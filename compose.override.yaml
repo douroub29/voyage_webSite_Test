@@ -13,6 +13,8 @@ services:
       # Gardés dans le conteneur (plus rapide sous Windows, pas de conflit avec l'hôte)
       - /var/www/html/vendor
       - /var/www/html/var
+      # Bibliothèques JS (importmap), non versionnées : on garde celles de l'image
+      - /var/www/html/assets/vendor
       - uploads:/var/www/html/public/uploads
     restart: "no"
 
